@@ -13,26 +13,23 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0D1311" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ECEEE9" media="(prefers-color-scheme: light)">
-<style>
-:root{padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-body{margin:0;overscroll-behavior-y:none}
-[hidden]{display:none!important}
-</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@500;600;700;800&display=swap">
 <style>
-/* Layout: Kessel + Steuerung links, senkrechtes Tableau rechts; auf dem Handy gestapelt mit klebender Chip-Leiste unten */
+/* Layout: Kessel + Verlauf + Einsatzleiste links, senkrechtes Tableau rechts; am Handy gestapelt mit klebender Einsatzleiste */
 :root{
   --bg:#ECEEE9; --surface:#FAFBF8; --fg:#16201B; --muted:#646E68; --line:#D4D9D3;
   --felt:#1D5440; --felt-ink:#E7F1EB; --felt-line:rgba(231,241,235,.24);
   --red:#B5322B; --black:#191D1B; --zero:#2A7D52;
   --accent:#A8792C; --accent-ink:#FFFFFF;
-  --win:#23804F; --lose:#A0423A;
+  --win:#1F8A50; --lose:#C0392F; --win-fill:rgba(31,138,80,.16); --lose-fill:rgba(192,57,47,.14);
   --rim:#2A231F; --rim2:#463A31; --cone:#CDB98F; --cone2:#9C8761;
-  --c1:#ECE7DC; --c1-ink:#2A2620; --c5:#C23A2F; --c25:#2C7A4D; --c100:#24272C; --c500:#6A4CA0; --chip-ink:#FFFFFF;
+  --c10:#ECE7DC; --c10-ink:#2A2620; --c20:#C23A2F; --c50:#2C7A4D; --cx:#2B5C9E; --call:#24272C; --chip-ink:#FFFFFF;
+  --scrim:rgba(10,14,12,.45);
   --display:"Fraunces", Georgia, "Times New Roman", serif;
   --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -40,8 +37,9 @@ body{margin:0;overscroll-behavior-y:none}
     --felt:#163F30; --felt-ink:#DCEAE2; --felt-line:rgba(220,234,226,.18);
     --red:#C23C34; --black:#070908; --zero:#2B8657;
     --accent:#D2A458; --accent-ink:#1A1408;
-    --win:#4CC283; --lose:#E07A70;
+    --win:#3DD07F; --lose:#F0675B; --win-fill:rgba(61,208,127,.16); --lose-fill:rgba(240,103,91,.15);
     --rim:#1C1714; --rim2:#3A3029; --cone:#B9A57C; --cone2:#7E6C4C;
+    --call:#3A3F46; --scrim:rgba(0,0,0,.6);
     color-scheme:dark;
   }
 }
@@ -50,28 +48,32 @@ body{margin:0;overscroll-behavior-y:none}
   --felt:#163F30; --felt-ink:#DCEAE2; --felt-line:rgba(220,234,226,.18);
   --red:#C23C34; --black:#070908; --zero:#2B8657;
   --accent:#D2A458; --accent-ink:#1A1408;
-  --win:#4CC283; --lose:#E07A70;
+  --win:#3DD07F; --lose:#F0675B; --win-fill:rgba(61,208,127,.16); --lose-fill:rgba(240,103,91,.15);
   --rim:#1C1714; --rim2:#3A3029; --cone:#B9A57C; --cone2:#7E6C4C;
+  --call:#3A3F46; --scrim:rgba(0,0,0,.6);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--fg)}
-body{font-family:var(--body);font-size:15px;-webkit-tap-highlight-color:transparent}
+body{overflow-x:clip;margin:0;font-family:var(--body);font-size:15px;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+[hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
-button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.app{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:14px 0;display:grid;gap:18px;
-  grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "wheel" "table" "controls"}
+.app{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:14px 0;display:grid;gap:16px;
+  grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "wheel" "graph" "table" "controls"}
 @media (min-width:860px){
-  .app{grid-template-columns:minmax(0,1fr) minmax(0,440px);grid-template-areas:"top top" "wheel table" "controls table";align-items:start;column-gap:40px;padding-block:24px 32px}
+  .app{grid-template-columns:minmax(0,1fr) minmax(0,440px);grid-template-areas:"top top" "wheel table" "graph table" "controls table";align-items:start;column-gap:40px;padding-block:24px 32px}
 }
 
 /* Kopfzeile */
-.top{grid-area:top;display:flex;align-items:center;gap:12px}
+.top{grid-area:top;display:flex;align-items:center;gap:10px}
 .brand{font-family:var(--display);font-weight:600;font-size:26px;letter-spacing:-.01em;line-height:1}
 .brand small{display:block;font-family:var(--body);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:5px}
-.bal{margin-left:auto;text-align:right}
-.bal-label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bal{margin-left:auto;text-align:right;border:0;background:transparent;padding:4px 6px;border-radius:12px}
+.bal:active{background:var(--line)}
+.bal-label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;gap:5px;justify-content:flex-end;align-items:center}
+.bal-label svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2}
 .bal-val{font-family:var(--display);font-weight:600;font-size:28px;font-variant-numeric:tabular-nums;line-height:1.05;transition:color .3s}
 .bal-val.up{color:var(--win)} .bal-val.down{color:var(--lose)}
 .icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
@@ -79,98 +81,129 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
 .icon-btn.armed{border-color:var(--lose);color:var(--lose)}
 
 /* Kessel */
-.wheel-area{grid-area:wheel;display:grid;gap:14px;justify-items:center}
-.wheel-wrap{position:relative;width:min(100%,380px);aspect-ratio:1;max-width:100%}
-.wheel-wrap canvas{width:100%;height:100%;display:block}
+.wheel-area{grid-area:wheel;display:grid;gap:12px;justify-items:center}
+.wheel-wrap{position:relative;width:min(100%,370px);aspect-ratio:1;max-width:100%;border-radius:50%}
+.wheel-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.wheel-wrap #fx{pointer-events:none;inset:-12%;width:124%;height:124%}
+.wheel-wrap.glow{animation:glow 1.1s ease-out}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--accent)}35%{box-shadow:0 0 0 10px transparent,0 0 60px 10px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
 .hub{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;
-  font-family:var(--display);font-weight:600;font-size:clamp(26px,9vw,40px);color:#fff;font-variant-numeric:tabular-nums;
-  background:var(--rim2);box-shadow:0 0 0 3px var(--accent),inset 0 2px 10px rgba(0,0,0,.35);transition:background .35s,transform .35s,opacity .35s}
+  font-family:var(--display);font-weight:600;font-size:clamp(26px,9vw,40px);color:#fff;font-variant-numeric:tabular-nums;z-index:2;
+  background:var(--rim2);box-shadow:0 0 0 3px var(--accent),inset 0 2px 10px rgba(0,0,0,.35);transition:background .3s,transform .3s,opacity .25s}
 .hub.red{background:var(--red)} .hub.black{background:var(--black)} .hub.zero{background:var(--zero)}
-.hub.dim{opacity:.0;transform:translate(-50%,-50%) scale(.85)}
-.hub.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{0%{transform:translate(-50%,-50%) scale(.6)}100%{transform:translate(-50%,-50%) scale(1)}}
+.hub.dim{opacity:0;transform:translate(-50%,-50%) scale(.85)}
+.hub.pop{animation:pop .55s cubic-bezier(.2,1.7,.4,1)}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(.5)}100%{transform:translate(-50%,-50%) scale(1)}}
 
 .msg{min-height:24px;font-weight:700;font-size:15px;text-align:center;font-variant-numeric:tabular-nums}
 .msg.win{color:var(--win)} .msg.lose{color:var(--lose)} .msg.info{color:var(--muted);font-weight:600}
-.history{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:380px;min-height:26px}
-.history span{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+.msg.big{font-size:19px;animation:pop2 .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes pop2{0%{transform:scale(.7)}100%{transform:scale(1)}}
+.history{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:370px;min-height:26px}
+.history span{min-width:26px;height:26px;padding:0 4px;border-radius:13px;display:grid;place-items:center;font-size:11.5px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
 .history span.red{background:var(--red)} .history span.black{background:var(--black);box-shadow:inset 0 0 0 1px var(--line)} .history span.zero{background:var(--zero)}
 .history span:first-child{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
-.history .empty{width:auto;color:var(--muted);font-weight:600;font-size:12.5px}
+.history .empty{color:var(--muted);font-weight:600;font-size:12.5px}
+
+/* Verlauf-Graph */
+.graph{grid-area:graph;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px 10px;width:100%;max-width:400px;justify-self:center}
+.graph-head{display:flex;align-items:baseline;gap:8px}
+.graph-label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.graph-val{margin-left:auto;font-family:var(--display);font-weight:600;font-size:20px;font-variant-numeric:tabular-nums}
+.graph-val.pos{color:var(--win)} .graph-val.neg{color:var(--lose)}
+.graph-sub{display:flex;gap:12px;font-size:11.5px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;margin-top:6px}
+.graph-sub b{color:var(--fg);font-weight:700}
+#chart{display:block;width:100%;height:76px;margin-top:6px}
 
 /* Tableau */
 .table-area{grid-area:table;display:grid;justify-items:center}
-.table{width:100%;max-width:440px;display:grid;grid-template-columns:42px repeat(3,minmax(0,1fr)) 52px;grid-template-rows:repeat(14,minmax(38px,auto));gap:3px;
-  background:var(--felt);padding:10px;border-radius:16px}
-.cell{position:relative;display:grid;place-items:center;border-radius:7px;font-weight:700;font-size:15px;color:var(--felt-ink);
-  border:1px solid var(--felt-line);background:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+.table{width:100%;max-width:440px;display:grid;grid-template-columns:40px repeat(6,minmax(0,1fr)) 50px;grid-template-rows:repeat(14,minmax(40px,auto));gap:3px;
+  background:var(--felt);padding:10px;border-radius:18px}
+.cell{position:relative;display:grid;place-items:center;border-radius:8px;font-weight:700;font-size:15px;color:var(--felt-ink);
+  border:1px solid var(--felt-line);background:transparent;user-select:none;-webkit-user-select:none;
   font-variant-numeric:tabular-nums;transition:transform .08s, filter .15s;padding:0}
-.cell:active{transform:scale(.96)}
+.cell:active{transform:scale(.95)}
 @media (hover:hover){.cell:hover{filter:brightness(1.15)}}
 .cell.n{color:#fff;border-color:transparent}
 .cell.n.red{background:var(--red)} .cell.n.black{background:var(--black)}
-.cell.zero{grid-column:2/5;grid-row:1;background:var(--zero);color:#fff;border-color:transparent;font-size:17px}
-.cell.v{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12.5px;letter-spacing:.06em;font-weight:700}
-.cell.v:active{transform:rotate(180deg) scale(.96)}
+.cell.n.zero{background:var(--zero);font-size:17px}
+.cell.v{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12.5px;letter-spacing:.06em}
+.cell.v:active{transform:rotate(180deg) scale(.95)}
 .cell.col{font-size:12px;letter-spacing:.04em}
 .swatch{display:inline-block;width:12px;height:12px;transform:rotate(45deg);border-radius:2px;margin:4px 0}
 .swatch.r{background:var(--red)} .swatch.b{background:var(--black);box-shadow:0 0 0 1px var(--felt-line)}
-.cell.hit{z-index:2;box-shadow:0 0 0 3px var(--accent),0 0 18px 2px var(--accent);animation:hit 1.2s ease-in-out 2}
+.cell.hit{z-index:2;box-shadow:0 0 0 3px var(--accent),0 0 18px 2px var(--accent);animation:hit 1s ease-in-out 3}
 @keyframes hit{50%{box-shadow:0 0 0 3px var(--accent),0 0 4px 0 var(--accent)}}
 
-.stack{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;display:grid;place-items:center;
+.stack{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;display:grid;place-items:center;
   font:800 10px/1 var(--body);color:var(--chip-ink);writing-mode:horizontal-tb;pointer-events:none;
-  box-shadow:0 2px 0 rgba(0,0,0,.35),inset 0 0 0 3px rgba(255,255,255,.0);animation:drop .18s ease-out}
+  box-shadow:0 2px 0 rgba(0,0,0,.35);animation:drop .2s cubic-bezier(.2,1.6,.4,1);z-index:1}
 .cell.v .stack{transform:rotate(180deg)}
 .stack::before{content:"";position:absolute;inset:3px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.75)}
-.stack.d1{background:var(--c1);color:var(--c1-ink)} .stack.d1::before{border-color:rgba(0,0,0,.35)}
-.stack.d5{background:var(--c5)} .stack.d25{background:var(--c25)} .stack.d100{background:var(--c100)} .stack.d500{background:var(--c500)}
-.stack.lost{opacity:.25;filter:grayscale(1);transition:opacity .6s .2s}
-.stack.won{box-shadow:0 0 0 2px var(--accent),0 0 12px var(--accent)}
-@keyframes drop{0%{scale:1.5;opacity:0}100%{scale:1;opacity:1}}
+.stack.d10{background:var(--c10);color:var(--c10-ink)} .stack.d10::before{border-color:rgba(0,0,0,.35)}
+.stack.d20{background:var(--c20)} .stack.d50{background:var(--c50)} .stack.dx{background:var(--cx)} .stack.dall{background:var(--call)}
+.stack.lost{opacity:.22;filter:grayscale(1);transition:opacity .5s .15s}
+.stack.won{box-shadow:0 0 0 2px var(--accent),0 0 14px var(--accent)}
+@keyframes drop{0%{scale:1.6;opacity:0}100%{scale:1;opacity:1}}
 
-/* Steuerung */
-.controls{grid-area:controls;display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;
-  position:sticky;bottom:0;margin-inline:-4px;box-shadow:0 -8px 24px rgba(0,0,0,.08);z-index:5;margin-bottom:max(10px, env(safe-area-inset-bottom, 0px))}
-@media (min-width:860px){.controls{position:static;box-shadow:none;margin:0;max-width:380px;width:100%;justify-self:center}}
-.chips{display:flex;justify-content:space-between;gap:6px}
-.chip{flex:1;max-width:54px;aspect-ratio:1;border-radius:50%;border:0;position:relative;display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--chip-ink);
-  box-shadow:0 3px 0 rgba(0,0,0,.3);transition:transform .15s, box-shadow .15s;font-variant-numeric:tabular-nums}
+/* Einsatzleiste */
+.controls{grid-area:controls;display:grid;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:14px;
+  position:sticky;bottom:0;margin-inline:-6px;box-shadow:0 -10px 30px rgba(0,0,0,.12);z-index:5;margin-bottom:max(10px, env(safe-area-inset-bottom, 0px))}
+@media (min-width:860px){.controls{position:static;box-shadow:none;margin:0;max-width:400px;width:100%;justify-self:center}}
+.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end}
+.chip{aspect-ratio:1;width:100%;max-width:58px;justify-self:center;border-radius:50%;border:0;position:relative;display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--chip-ink);
+  box-shadow:0 3px 0 rgba(0,0,0,.3);transition:transform .15s cubic-bezier(.2,1.6,.4,1), box-shadow .15s;font-variant-numeric:tabular-nums;line-height:1;padding:0}
 .chip::before{content:"";position:absolute;inset:4px;border-radius:50%;border:2px dashed rgba(255,255,255,.7)}
-.chip[data-v="1"]{background:var(--c1);color:var(--c1-ink)} .chip[data-v="1"]::before{border-color:rgba(0,0,0,.3)}
-.chip[data-v="5"]{background:var(--c5)} .chip[data-v="25"]{background:var(--c25)} .chip[data-v="100"]{background:var(--c100)} .chip[data-v="500"]{background:var(--c500)}
-.chip[aria-checked="true"]{transform:translateY(-5px);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent),0 6px 0 rgba(0,0,0,.18)}
-.chip:disabled{opacity:.3;cursor:not-allowed}
-.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.act{border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 4px;font-size:12.5px;font-weight:700;color:var(--fg)}
-.act:disabled{opacity:.35;cursor:not-allowed}
-.spinrow{display:flex;align-items:center;gap:12px}
-.stake{line-height:1.15}
-.stake-label{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.stake-val{font-family:var(--display);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums}
-.spin{margin-left:auto;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;letter-spacing:.02em;padding:14px 30px;
-  box-shadow:0 3px 0 rgba(0,0,0,.25);transition:transform .1s, opacity .2s}
-.spin:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.chip span{position:relative;font-size:12px}
+.chip small{display:block;font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85;margin-top:2px}
+.chip[data-v="10"]{background:var(--c10);color:var(--c10-ink)} .chip[data-v="10"]::before{border-color:rgba(0,0,0,.3)}
+.chip[data-v="20"]{background:var(--c20)} .chip[data-v="50"]{background:var(--c50)}
+.chip[data-v="custom"]{background:var(--cx)} .chip[data-v="all"]{background:var(--call)}
+.chip[data-v="all"] span{font-size:11px;letter-spacing:.02em}
+.chip[aria-checked="true"]{transform:translateY(-6px) scale(1.06);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent),0 8px 0 rgba(0,0,0,.15)}
+.chip:disabled{opacity:.35;cursor:not-allowed}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:transparent;border-radius:12px;padding:6px 2px;font-size:11px;font-weight:700;color:var(--muted)}
+.tool svg{width:20px;height:20px;stroke:var(--fg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tool:active{background:var(--line)}
+.tool:disabled{opacity:.3;cursor:not-allowed}
+.spin{width:100%;border:0;border-radius:16px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:17px;letter-spacing:.02em;padding:15px 18px;
+  display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 0 rgba(0,0,0,.25);transition:transform .1s, opacity .2s;font-variant-numeric:tabular-nums}
+.spin:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
 .spin:disabled{opacity:.45;cursor:not-allowed}
-.refill{border:1px dashed var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:10px;font-weight:800}
+.spin .amt{font-family:var(--display);font-weight:600;font-size:18px;opacity:.9}
+.spin .amt:empty{display:none}
 
-.foot{grid-area:auto;color:var(--muted);font-size:12px;text-align:center;padding-bottom:8px}
+/* Eingabe-Sheet */
+.sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+@keyframes fade{from{opacity:0}}
+.sheet{width:100%;max-width:440px;background:var(--surface);border-radius:22px 22px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:14px;animation:up .22s cubic-bezier(.2,1,.3,1)}
+@media (min-width:600px){.sheet-bg{align-items:center}.sheet{border-radius:22px}}
+@keyframes up{from{transform:translateY(40px);opacity:.5}}
+.sheet h2{margin:0;font-family:var(--display);font-weight:600;font-size:22px}
+.sheet p{margin:-6px 0 0;color:var(--muted);font-size:13px}
+.sheet input{width:100%;font:600 28px var(--display);font-variant-numeric:tabular-nums;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.quick{display:flex;gap:8px;flex-wrap:wrap}
+.quick button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px}
+.sheet-actions{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.sheet-actions button{border-radius:14px;padding:14px;font-weight:800;border:1px solid var(--line);background:transparent}
+.sheet-actions .ok{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+.foot{color:var(--muted);font-size:12px;text-align:center;padding-bottom:8px}
 @media (min-width:860px){.foot{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-
-
 <div class="app">
   <header class="top">
     <div class="brand">Kugel<small>Roulette · Spielgeld</small></div>
-    <div class="bal">
-      <div class="bal-label">Guthaben</div>
+    <button class="bal" id="balBtn" aria-label="Guthaben ändern">
+      <div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
       <div class="bal-val" id="balance">1.000</div>
-    </div>
+    </button>
     <button class="icon-btn" id="soundBtn" aria-label="Ton aus" title="Ton an/aus"></button>
-    <button class="icon-btn" id="resetBtn" aria-label="Neu starten" title="Neu starten">
+    <button class="icon-btn" id="resetBtn" aria-label="Verlauf zurücksetzen" title="Verlauf zurücksetzen">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
     </button>
   </header>
@@ -178,10 +211,20 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
   <section class="wheel-area" aria-label="Kessel">
     <div class="wheel-wrap" id="wheelWrap">
       <canvas id="wheel" aria-hidden="true"></canvas>
+      <canvas id="fx" aria-hidden="true"></canvas>
       <div class="hub" id="hub">–</div>
     </div>
     <div class="msg info" id="msg" aria-live="polite">Wähle einen Chip und tippe aufs Feld.</div>
     <div class="history" id="history" aria-label="Letzte Zahlen"></div>
+  </section>
+
+  <section class="graph" aria-label="Gewinn und Verlust">
+    <div class="graph-head">
+      <span class="graph-label">Gewinn / Verlust</span>
+      <span class="graph-val" id="profit">0</span>
+    </div>
+    <canvas id="chart" aria-hidden="true"></canvas>
+    <div class="graph-sub"><span>Runden <b id="sRounds">0</b></span><span>Gewonnen <b id="sWins">0</b></span><span>Gesetzt <b id="sWagered">0</b></span></div>
   </section>
 
   <section class="table-area" aria-label="Tableau">
@@ -190,47 +233,68 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
 
   <section class="controls" aria-label="Einsätze">
     <div class="chips" role="radiogroup" aria-label="Chipwert" id="chips"></div>
-    <div class="actions">
-      <button class="act" id="undoBtn">Zurück</button>
-      <button class="act" id="clearBtn">Leeren</button>
-      <button class="act" id="repeatBtn">Nochmal</button>
-      <button class="act" id="doubleBtn">×2</button>
+    <div class="tools">
+      <button class="tool" id="undoBtn"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Zurück</button>
+      <button class="tool" id="clearBtn"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Leeren</button>
+      <button class="tool" id="repeatBtn"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>Nochmal</button>
+      <button class="tool" id="doubleBtn"><svg viewBox="0 0 24 24"><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="800" style="fill:var(--fg);stroke:none;font-family:var(--body)">2×</text></svg>Doppeln</button>
     </div>
-    <button class="refill" id="refillBtn" hidden>Pleite. Wieder auf 1.000 auffüllen</button>
-    <div class="spinrow">
-      <div class="stake"><div class="stake-label">Einsatz</div><div class="stake-val" id="stake">0</div></div>
-      <button class="spin" id="spinBtn">Drehen</button>
-    </div>
+    <button class="spin" id="spinBtn">Drehen <span class="amt" id="stake"></span></button>
   </section>
 
-  <p class="foot">Europäisches Roulette mit einer Null. Nur Spielgeld, kein Echtgeld. Dein Stand wird in diesem Browser gespeichert.</p>
+  <p class="foot">Amerikanisches Roulette mit 0 und 00. Nur Spielgeld, kein Echtgeld. Dein Stand wird auf diesem Gerät gespeichert.</p>
+</div>
+
+<div class="sheet-bg" id="sheetBg" hidden>
+  <form class="sheet" id="sheet" autocomplete="off">
+    <h2 id="sheetTitle">Guthaben</h2>
+    <p id="sheetHint"></p>
+    <input id="sheetInput" type="text" inputmode="numeric" pattern="[0-9.]*" aria-labelledby="sheetTitle">
+    <div class="quick" id="sheetQuick"></div>
+    <div class="sheet-actions">
+      <button type="button" id="sheetCancel">Abbrechen</button>
+      <button type="submit" class="ok">Übernehmen</button>
+    </div>
+  </form>
 </div>
 
 <script>
 (() => {
-  const ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+  // Amerikanischer Kessel, 37 steht für 00
+  const ORDER = [0,28,9,26,30,11,7,20,32,17,5,22,34,15,3,24,36,13,1,37,27,10,25,29,12,8,19,31,18,6,21,33,16,4,23,35,14,2];
+  const P = ORDER.length;
   const REDS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-  const DENOMS = [1,5,25,100,500];
   const START = 1000;
-  const KEY = 'kugel-roulette-v1';
-  const STEP = Math.PI * 2 / 37;
+  const KEY = 'kugel-roulette-v2';
+  const STEP = Math.PI * 2 / P;
   const TAU = Math.PI * 2;
-  const colorOf = n => n === 0 ? 'zero' : REDS.has(n) ? 'red' : 'black';
-  const colorName = n => n === 0 ? 'Grün' : REDS.has(n) ? 'Rot' : 'Schwarz';
-  const fmt = n => n.toLocaleString('de-DE');
-  const short = n => n >= 1000 ? (n / 1000).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'k' : String(n);
+  const isZero = n => n === 0 || n === 37;
+  const lab = n => n === 37 ? '00' : String(n);
+  const colorOf = n => isZero(n) ? 'zero' : REDS.has(n) ? 'red' : 'black';
+  const colorName = n => isZero(n) ? 'Grün' : REDS.has(n) ? 'Rot' : 'Schwarz';
+  const fmt = n => Math.round(n).toLocaleString('de-DE');
+  const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
+  const short = n => n >= 1e6 ? (n / 1e6).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'M'
+                   : n >= 1000 ? (n / 1000).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'k' : String(n);
   const $ = id => document.getElementById(id);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
   // ---------- Zustand ----------
-  let state = {balance: START, bets: {}, history: [], lastBets: null, sound: true, chip: 5, lastIdx: 0};
+  let state = {balance: START, bets: {}, history: [], lastBets: null, sound: true, chip: 10, custom: 0, lastIdx: 0,
+               graph: [0], rounds: 0, wins: 0, wagered: 0};
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (s && typeof s.balance === 'number') state = Object.assign(state, s);
+    else {
+      const old = JSON.parse(localStorage.getItem('kugel-roulette-v1') || 'null');
+      if (old && typeof old.balance === 'number') state.balance = old.balance + Object.values(old.bets || {}).reduce((a, v) => a + v, 0);
+    }
   } catch (e) {}
+  if (![10, 20, 50, 'custom', 'all'].includes(state.chip)) state.chip = 10;
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
   let undo = [];
-  let shown = null;      // Einsätze der letzten Runde, nach dem Ergebnis noch sichtbar
+  let shown = null;
   let lastResult = null;
   let spinning = false;
 
@@ -238,18 +302,18 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
 
   const BETS = {
     n:     v => ({m: 35, w: n => n === v}),
-    dz:    v => ({m: 2,  w: n => n > 0 && Math.ceil(n / 12) === v}),
-    col:   v => ({m: 2,  w: n => n > 0 && ((n - 1) % 3) + 1 === v}),
+    dz:    v => ({m: 2,  w: n => !isZero(n) && Math.ceil(n / 12) === v}),
+    col:   v => ({m: 2,  w: n => !isZero(n) && ((n - 1) % 3) + 1 === v}),
     red:   () => ({m: 1, w: n => REDS.has(n)}),
-    black: () => ({m: 1, w: n => n > 0 && !REDS.has(n)}),
-    even:  () => ({m: 1, w: n => n > 0 && n % 2 === 0}),
-    odd:   () => ({m: 1, w: n => n % 2 === 1}),
+    black: () => ({m: 1, w: n => !isZero(n) && !REDS.has(n)}),
+    even:  () => ({m: 1, w: n => !isZero(n) && n % 2 === 0}),
+    odd:   () => ({m: 1, w: n => !isZero(n) && n % 2 === 1}),
     low:   () => ({m: 1, w: n => n >= 1 && n <= 18}),
-    high:  () => ({m: 1, w: n => n >= 19}),
+    high:  () => ({m: 1, w: n => n >= 19 && n <= 36}),
   };
   const betOf = key => { const [t, v] = key.split(':'); return BETS[t](Number(v)); };
 
-  // ---------- Tableau aufbauen ----------
+  // ---------- Tableau ----------
   const table = $('table');
   const cells = {};
   function addCell(key, html, cls, col, row, label) {
@@ -263,16 +327,17 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     table.appendChild(b);
     cells[key] = b;
   }
-  addCell('n:0', '0', 'zero', '2 / 5', '1', 'Null');
+  addCell('n:0', '0', 'n zero', '2 / 5', '1', 'Null');
+  addCell('n:37', '00', 'n zero', '5 / 8', '1', 'Doppelnull');
   for (let n = 1; n <= 36; n++) {
-    addCell('n:' + n, n, 'n ' + colorOf(n), String(((n - 1) % 3) + 2), String(Math.floor((n - 1) / 3) + 2), n + ' ' + colorName(n));
+    addCell('n:' + n, n, 'n ' + colorOf(n), (2 + ((n - 1) % 3) * 2) + ' / span 2', String(Math.floor((n - 1) / 3) + 2), n + ' ' + colorName(n));
   }
   [['1–12', 1], ['13–24', 2], ['25–36', 3]].forEach(([t, d]) =>
     addCell('dz:' + d, t, 'v', '1', (2 + (d - 1) * 4) + ' / span 4', d + '. Dutzend'));
   [['low', '1–18'], ['even', 'Gerade'], ['red', '<span class="swatch r"></span>'], ['black', '<span class="swatch b"></span>'], ['odd', 'Ungerade'], ['high', '19–36']]
-    .forEach(([k, t], i) => addCell(k, t, 'v', '5', (2 + i * 2) + ' / span 2',
+    .forEach(([k, t], i) => addCell(k, t, 'v', '8', (2 + i * 2) + ' / span 2',
       {low: 'Niedrig 1 bis 18', even: 'Gerade', red: 'Rot', black: 'Schwarz', odd: 'Ungerade', high: 'Hoch 19 bis 36'}[k]));
-  [1, 2, 3].forEach(c => addCell('col:' + c, '2:1', 'col', String(c + 1), '14', c + '. Kolonne'));
+  [1, 2, 3].forEach(c => addCell('col:' + c, '2:1', 'col', (2 + (c - 1) * 2) + ' / span 2', '14', c + '. Kolonne'));
   table.addEventListener('click', e => {
     const c = e.target.closest('.cell');
     if (c) place(c.dataset.key);
@@ -280,35 +345,96 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
 
   // ---------- Chips ----------
   const chipsEl = $('chips');
-  DENOMS.forEach(v => {
+  const CHIPS = [10, 20, 50, 'custom', 'all'];
+  CHIPS.forEach(v => {
     const b = document.createElement('button');
-    b.className = 'chip'; b.dataset.v = v; b.textContent = v;
-    b.setAttribute('role', 'radio'); b.setAttribute('aria-label', 'Chip ' + v);
-    b.onclick = () => { state.chip = v; save(); renderChips(); sfx.chip(); };
+    b.className = 'chip'; b.dataset.v = v;
+    b.setAttribute('role', 'radio');
+    b.onclick = () => {
+      if (spinning) return;
+      if (v === 'custom' && (!state.custom || state.chip === 'custom')) { openCustom(); return; }
+      state.chip = v; save(); renderChips(); sfx.chip(); buzz(8);
+    };
     chipsEl.appendChild(b);
   });
+  function chipValue() {
+    if (state.chip === 'all') return state.balance;
+    if (state.chip === 'custom') return state.custom || 0;
+    return state.chip;
+  }
+
+  // ---------- Eingabe-Sheet ----------
+  let sheetDone = null;
+  function openSheet({title, hint, value, quick, onOk}) {
+    $('sheetTitle').textContent = title;
+    $('sheetHint').textContent = hint;
+    const inp = $('sheetInput');
+    inp.value = value ? fmt(value) : '';
+    $('sheetQuick').innerHTML = '';
+    quick.forEach(q => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(q);
+      b.onclick = () => { inp.value = fmt(q); inp.focus(); };
+      $('sheetQuick').appendChild(b);
+    });
+    sheetDone = onOk;
+    $('sheetBg').hidden = false;
+    setTimeout(() => { inp.focus(); inp.select(); }, 60);
+  }
+  const closeSheet = () => { $('sheetBg').hidden = true; sheetDone = null; };
+  $('sheetCancel').onclick = closeSheet;
+  $('sheetBg').addEventListener('click', e => { if (e.target === $('sheetBg')) closeSheet(); });
+  $('sheet').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = Number(String($('sheetInput').value).replace(/[^0-9]/g, ''));
+    if (!Number.isFinite(v) || v > 1e12) { $('sheetHint').textContent = 'Bitte eine Zahl bis 1 Billion eingeben.'; return; }
+    const ok = sheetDone && sheetDone(v);
+    if (ok !== false) closeSheet();
+  });
+  $('sheetInput').addEventListener('input', e => {
+    const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 13);
+    e.target.value = digits ? fmt(Number(digits)) : '';
+  });
+
+  $('balBtn').onclick = () => {
+    if (spinning) return;
+    openSheet({
+      title: 'Guthaben festlegen',
+      hint: 'So viel Spielgeld hast du danach frei. Gewinn und Verlust im Graphen bleiben unverändert.',
+      value: state.balance, quick: [1000, 10000, 100000, 1000000],
+      onOk: v => { state.balance = v; save(); render(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
+    });
+  };
+  function openCustom() {
+    openSheet({
+      title: 'Eigener Chip', hint: 'Mit diesem Betrag setzt du pro Tipp aufs Feld.',
+      value: state.custom || '', quick: [5, 100, 250, 500, 1000],
+      onOk: v => {
+        if (v < 1) { $('sheetHint').textContent = 'Der Chip muss mindestens 1 wert sein.'; return false; }
+        state.custom = v; state.chip = 'custom'; save(); renderChips(); sfx.chip();
+      }
+    });
+  }
 
   // ---------- Aktionen ----------
   function clearShown() {
-    if (shown) { shown = null; }
+    shown = null;
     if (lastResult !== null && cells['n:' + lastResult]) cells['n:' + lastResult].classList.remove('hit');
   }
-  function say(text, kind = 'info') { const m = $('msg'); m.textContent = text; m.className = 'msg ' + kind; }
+  function say(text, kind = 'info', big) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + kind + (big ? ' big' : ''); }
 
   function place(key) {
     if (spinning) return;
     ensureAudio();
     clearShown();
-    let a = state.chip;
-    if (a > state.balance) {
-      if (state.balance <= 0) { say('Kein Guthaben mehr frei.', 'lose'); return; }
-      a = state.balance;   // Rest setzen statt abzulehnen
-    }
+    let a = chipValue();
+    if (state.chip === 'custom' && !a) { openCustom(); return; }
+    if (state.balance <= 0) { say('Kein Guthaben frei. Tipp oben aufs Guthaben, um es aufzufüllen.', 'lose'); return; }
+    if (a > state.balance) a = state.balance;
     state.balance -= a;
     state.bets[key] = (state.bets[key] || 0) + a;
     undo.push({key, a});
-    sfx.chip();
-    say('Einsatz auf ' + cells[key].getAttribute('aria-label') + ': ' + fmt(state.bets[key]), 'info');
+    sfx.chip(); buzz(10);
+    say((state.chip === 'all' ? 'All in auf ' : 'Einsatz auf ') + cells[key].getAttribute('aria-label') + ': ' + fmt(state.bets[key]), 'info');
     save(); render();
   }
   $('undoBtn').onclick = () => {
@@ -336,62 +462,72 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     for (const [k, v] of Object.entries(state.bets)) { state.bets[k] = v * 2; undo.push({key: k, a: v}); }
     state.balance -= t; sfx.chip(); save(); render();
   };
-  $('refillBtn').onclick = () => { state.balance = START; save(); render(); say('Wieder 1.000 auf dem Konto.', 'info'); };
 
   let resetArmed = null;
   $('resetBtn').onclick = () => {
     if (spinning) return;
     const b = $('resetBtn');
     if (!resetArmed) {
-      b.classList.add('armed'); say('Nochmal tippen zum Zurücksetzen auf 1.000.', 'lose');
+      b.classList.add('armed'); say('Nochmal tippen: Graph und letzte Zahlen löschen.', 'lose');
       resetArmed = setTimeout(() => { b.classList.remove('armed'); resetArmed = null; say('', 'info'); }, 3000);
       return;
     }
     clearTimeout(resetArmed); resetArmed = null; b.classList.remove('armed');
-    state = Object.assign(state, {balance: START, bets: {}, history: [], lastBets: null});
-    undo = []; clearShown(); lastResult = null; save(); render(); setHub(null);
-    say('Neu gestartet mit 1.000.', 'info');
+    Object.assign(state, {history: [], graph: [0], rounds: 0, wins: 0, wagered: 0});
+    clearShown(); save(); render(); drawChart(); setHub(null);
+    say('Verlauf gelöscht. Dein Guthaben bleibt.', 'info');
   };
 
   $('soundBtn').onclick = () => { state.sound = !state.sound; save(); renderSound(); if (state.sound) { ensureAudio(); sfx.chip(); } };
 
   // ---------- Rendering ----------
+  const stackClass = (v, k) => v >= 1000 ? 'dall' : v >= 100 ? 'dx' : v >= 50 ? 'd50' : v >= 20 ? 'd20' : 'd10';
   function render() {
-    // Guthaben inkl. liegender Einsätze wäre irreführend, wir zeigen frei verfügbares Guthaben
-    const bal = $('balance');
-    bal.textContent = fmt(state.balance);
-    $('stake').textContent = fmt(total(state.bets));
-    // Chips auf dem Tisch
+    $('balance').textContent = fmt(state.balance);
+    const t = total(state.bets);
+    $('stake').textContent = t ? fmt(t) : '';
     table.querySelectorAll('.stack').forEach(s => s.remove());
-    const src = total(state.bets) ? state.bets : (shown ? shown.bets : {});
+    const src = t ? state.bets : (shown ? shown.bets : {});
     for (const [k, v] of Object.entries(src)) {
       const s = document.createElement('span');
-      const d = [...DENOMS].reverse().find(x => v >= x) || 1;
-      s.className = 'stack d' + d;
-      if (!total(state.bets) && shown) s.classList.add(betOf(k).w(shown.n) ? 'won' : 'lost');
+      s.className = 'stack ' + stackClass(v);
+      if (!t && shown) s.classList.add(betOf(k).w(shown.n) ? 'won' : 'lost');
       s.textContent = short(v);
       cells[k].appendChild(s);
     }
-    const t = total(state.bets);
     $('undoBtn').disabled = spinning || !undo.length;
     $('clearBtn').disabled = spinning || !t;
     $('repeatBtn').disabled = spinning || !!t || !state.lastBets || total(state.lastBets) > state.balance;
     $('doubleBtn').disabled = spinning || !t || t > state.balance;
     $('spinBtn').disabled = spinning || !t;
-    $('refillBtn').hidden = spinning || state.balance > 0 || t > 0;
-    renderChips(); renderHistory();
+    renderChips(); renderHistory(); renderStats();
   }
   function renderChips() {
     chipsEl.querySelectorAll('.chip').forEach(c => {
-      const v = Number(c.dataset.v);
-      c.setAttribute('aria-checked', String(v === state.chip));
+      const v = c.dataset.v;
+      const sel = String(state.chip) === v;
+      c.setAttribute('aria-checked', String(sel));
       c.disabled = spinning;
+      if (v === 'custom') {
+        c.innerHTML = state.custom ? `<span>${short(state.custom)}<small>${sel ? 'ändern' : 'eigener'}</small></span>` : '<span>+<small>eigener</small></span>';
+        c.setAttribute('aria-label', state.custom ? 'Eigener Chip ' + state.custom : 'Eigenen Chip festlegen');
+      } else if (v === 'all') {
+        c.innerHTML = '<span>ALL<small>in</small></span>'; c.setAttribute('aria-label', 'All in');
+      } else { c.innerHTML = `<span>${v}</span>`; c.setAttribute('aria-label', 'Chip ' + v); }
     });
   }
   function renderHistory() {
-    const h = $('history');
-    h.innerHTML = state.history.length ? state.history.slice(0, 12).map(n => `<span class="${colorOf(n)}">${n}</span>`).join('')
+    $('history').innerHTML = state.history.length ? state.history.slice(0, 12).map(n => `<span class="${colorOf(n)}">${lab(n)}</span>`).join('')
       : '<span class="empty">Noch keine Runde gespielt</span>';
+  }
+  function renderStats() {
+    const p = state.graph[state.graph.length - 1] || 0;
+    const el = $('profit');
+    el.textContent = signed(p);
+    el.className = 'graph-val' + (p > 0 ? ' pos' : p < 0 ? ' neg' : '');
+    $('sRounds').textContent = fmt(state.rounds);
+    $('sWins').textContent = fmt(state.wins);
+    $('sWagered').textContent = fmt(state.wagered);
   }
   function renderSound() {
     const b = $('soundBtn');
@@ -403,7 +539,7 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
   function setHub(n, pop) {
     const hub = $('hub');
     hub.className = 'hub' + (n === null ? '' : ' ' + colorOf(n));
-    hub.textContent = n === null ? '–' : n;
+    hub.textContent = n === null ? '–' : lab(n);
     if (pop) { void hub.offsetWidth; hub.classList.add('pop'); }
   }
   function flashBalance(dir) {
@@ -412,55 +548,85 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     setTimeout(() => b.classList.remove('up', 'down'), 1400);
   }
   function countUp(from, to) {
-    const el = $('balance'), t0 = performance.now(), d = reduced ? 1 : 700;
+    const el = $('balance'), t0 = performance.now(), d = reduced ? 1 : 800;
     const step = now => {
       const k = Math.min(1, (now - t0) / d), e = 1 - Math.pow(1 - k, 3);
-      el.textContent = fmt(Math.round(from + (to - from) * e));
+      el.textContent = fmt(from + (to - from) * e);
       if (k < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
   }
 
+  // ---------- Graph ----------
+  const chart = $('chart'), cctx = chart.getContext('2d');
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  function drawChart() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const W = chart.clientWidth, H = chart.clientHeight;
+    if (!W) return;
+    chart.width = Math.round(W * dpr); chart.height = Math.round(H * dpr);
+    const g = cctx; g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const pts = state.graph.length > 1 ? state.graph : [0, 0];
+    let lo = Math.min(0, ...pts), hi = Math.max(0, ...pts);
+    if (hi === lo) { hi += 1; lo -= 1; }
+    const pad = 6;
+    const X = i => pad + (W - pad * 2) * i / (pts.length - 1);
+    const Y = v => pad + (H - pad * 2) * (1 - (v - lo) / (hi - lo));
+    const y0 = Y(0);
+    const path = () => { g.beginPath(); pts.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))); };
+    const area = () => { path(); g.lineTo(X(pts.length - 1), y0); g.lineTo(X(0), y0); g.closePath(); };
+    const win = css('--win'), lose = css('--lose');
+    // Nulllinie
+    g.strokeStyle = css('--line'); g.lineWidth = 1; g.setLineDash([3, 4]);
+    g.beginPath(); g.moveTo(0, y0); g.lineTo(W, y0); g.stroke(); g.setLineDash([]);
+    // oberhalb grün, unterhalb rot
+    [[0, y0, win, css('--win-fill')], [y0, H - y0, lose, css('--lose-fill')]].forEach(([top, h, line, fill]) => {
+      g.save(); g.beginPath(); g.rect(0, top, W, h); g.clip();
+      area(); g.fillStyle = fill; g.fill();
+      path(); g.strokeStyle = line; g.lineWidth = 2; g.lineJoin = 'round'; g.lineCap = 'round'; g.stroke();
+      g.restore();
+    });
+    // Endpunkt
+    const last = pts[pts.length - 1];
+    if (state.graph.length > 1) {
+      g.fillStyle = last >= 0 ? win : lose;
+      g.beginPath(); g.arc(X(pts.length - 1), Y(last), 3.5, 0, TAU); g.fill();
+    }
+  }
+  new ResizeObserver(drawChart).observe(chart);
+
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
-  let staticWheel = null, size = 0, dpr = 1;
+  let staticWheel = null, size = 0;
   let wheelAngle = 0;
-  let ballRel = (state.lastIdx || 0) * STEP;  // Kugel relativ zum Rad
-  let ballR = 0.655;                          // Radius als Anteil von R
-
-  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  let ballRel = (state.lastIdx || 0) * STEP;
+  let ballR = 0.655;
 
   function buildStatic() {
     const R = size / 2;
     const c = document.createElement('canvas'); c.width = c.height = size;
     const g = c.getContext('2d');
     g.translate(R, R);
-    // Außenring
     let gr = g.createRadialGradient(0, 0, R * .8, 0, 0, R);
     gr.addColorStop(0, css('--rim2')); gr.addColorStop(1, css('--rim'));
     g.fillStyle = gr; g.beginPath(); g.arc(0, 0, R * .995, 0, TAU); g.fill();
-    // Laufbahn der Kugel
     g.fillStyle = css('--rim'); g.beginPath(); g.arc(0, 0, R * .965, 0, TAU); g.fill();
     gr = g.createRadialGradient(0, 0, R * .86, 0, 0, R * .965);
     gr.addColorStop(0, 'rgba(255,255,255,.04)'); gr.addColorStop(.7, 'rgba(255,255,255,.10)'); gr.addColorStop(1, 'rgba(0,0,0,.2)');
     g.fillStyle = gr; g.beginPath(); g.arc(0, 0, R * .965, 0, TAU); g.fill();
-    // Fächer
     const cols = {red: css('--red'), black: css('--black'), zero: css('--zero')};
     ORDER.forEach((n, i) => {
       const a0 = (i - .5) * STEP - Math.PI / 2, a1 = (i + .5) * STEP - Math.PI / 2;
       g.fillStyle = cols[colorOf(n)];
       g.beginPath(); g.arc(0, 0, R * .86, a0, a1); g.arc(0, 0, R * .60, a1, a0, true); g.closePath(); g.fill();
     });
-    // Zahlen
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.font = `700 ${Math.round(R * .072)}px Manrope, system-ui, sans-serif`;
     ORDER.forEach((n, i) => {
-      g.save(); g.rotate(i * STEP); g.fillText(String(n), 0, -R * .79); g.restore();
+      g.font = `700 ${Math.round(R * (n === 37 ? .058 : .068))}px Manrope, system-ui, sans-serif`;
+      g.save(); g.rotate(i * STEP); g.fillText(lab(n), 0, -R * .79); g.restore();
     });
-    // Taschen (vertieft)
     g.fillStyle = 'rgba(0,0,0,.32)';
     g.beginPath(); g.arc(0, 0, R * .705, 0, TAU); g.arc(0, 0, R * .60, 0, TAU, true); g.fill();
-    // Stege
     g.strokeStyle = css('--accent'); g.lineWidth = Math.max(1, R * .008);
     ORDER.forEach((n, i) => {
       const a = (i - .5) * STEP - Math.PI / 2;
@@ -468,11 +634,9 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     });
     g.beginPath(); g.arc(0, 0, R * .705, 0, TAU); g.stroke();
     g.beginPath(); g.arc(0, 0, R * .86, 0, TAU); g.stroke();
-    // Konus
     gr = g.createRadialGradient(-R * .15, -R * .15, R * .05, 0, 0, R * .6);
     gr.addColorStop(0, css('--cone')); gr.addColorStop(1, css('--cone2'));
     g.fillStyle = gr; g.beginPath(); g.arc(0, 0, R * .60, 0, TAU); g.fill();
-    // Speichen des Drehkreuzes
     g.strokeStyle = css('--accent'); g.lineWidth = R * .025; g.lineCap = 'round';
     for (let k = 0; k < 4; k++) {
       const a = k * Math.PI / 2 + Math.PI / 4;
@@ -482,6 +646,8 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     staticWheel = c;
   }
 
+  let blur = 0; // Bewegungsunschärfe der Kugel bei hoher Geschwindigkeit
+  let prevBall = null;
   function draw() {
     if (!staticWheel) return;
     const R = size / 2;
@@ -489,9 +655,13 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     ctx.clearRect(0, 0, size, size);
     ctx.translate(R, R);
     ctx.save(); ctx.rotate(wheelAngle); ctx.drawImage(staticWheel, -R, -R); ctx.restore();
-    // Kugel
     const a = wheelAngle + ballRel - Math.PI / 2, r = R * ballR;
     const x = Math.cos(a) * r, y = Math.sin(a) * r, br = R * .033;
+    if (blur > .05 && prevBall) {
+      ctx.strokeStyle = `rgba(255,255,255,${Math.min(.5, blur * .5)})`; ctx.lineWidth = br * 1.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(prevBall[0], prevBall[1]); ctx.lineTo(x, y); ctx.stroke();
+    }
+    prevBall = [x, y];
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(x + br * .25, y + br * .35, br, 0, TAU); ctx.fill();
     const gr = ctx.createRadialGradient(x - br * .35, y - br * .35, br * .1, x, y, br);
     gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#c9cdd1');
@@ -500,68 +670,102 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
 
   function resize() {
     const w = $('wheelWrap').clientWidth;
-    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
     size = Math.max(100, Math.round(w * dpr));
     canvas.width = canvas.height = size;
+    const fx = $('fx'); fx.width = fx.height = Math.round(size * 1.24);
     buildStatic(); draw();
   }
   new ResizeObserver(resize).observe($('wheelWrap'));
-  const rebuild = () => { buildStatic(); draw(); };
+  const rebuild = () => { buildStatic(); draw(); drawChart(); };
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rebuild);
   new MutationObserver(rebuild).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
   if (document.fonts) document.fonts.ready.then(rebuild);
 
+  // ---------- Gewinn-Effekt ----------
+  const fx = $('fx'), fctx = fx.getContext('2d');
+  let parts = [], fxRunning = false;
+  function burst(power) {
+    if (reduced) return;
+    const S = fx.width, cx = S / 2, cy = S / 2, n = Math.min(90, 18 + Math.round(power * 6));
+    const gold = css('--accent');
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * TAU, v = S * (.006 + Math.random() * .014);
+      parts.push({x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - S * .006, r: S * (.008 + Math.random() * .01), life: 1,
+                  c: Math.random() < .75 ? gold : '#ffffff', spin: Math.random() * TAU});
+    }
+    if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxFrame); }
+  }
+  function fxFrame() {
+    const S = fx.width;
+    fctx.clearRect(0, 0, S, S);
+    parts = parts.filter(p => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.vy += S * .0004; p.vx *= .985; p.life -= .016; p.spin += .2;
+      fctx.globalAlpha = Math.max(0, p.life);
+      fctx.fillStyle = p.c;
+      fctx.beginPath(); fctx.ellipse(p.x, p.y, p.r, p.r * Math.abs(Math.cos(p.spin)) + .5, 0, 0, TAU); fctx.fill();
+    }
+    fctx.globalAlpha = 1;
+    if (parts.length) requestAnimationFrame(fxFrame); else { fxRunning = false; fctx.clearRect(0, 0, S, S); }
+  }
+
   // ---------- Zufall ----------
-  function rand37() {
-    const a = new Uint32Array(1), lim = Math.floor(4294967296 / 37) * 37;
+  function randPocket() {
+    const a = new Uint32Array(1), lim = Math.floor(4294967296 / P) * P;
     do { crypto.getRandomValues(a); } while (a[0] >= lim);
-    return a[0] % 37;
+    return a[0] % P;
   }
 
   // ---------- Drehen ----------
-  const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
+  const easeOutQuint = t => 1 - Math.pow(1 - t, 5);
   const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
   const mod = (a, m) => ((a % m) + m) % m;
 
   $('spinBtn').onclick = spin;
   function spin() {
-    if (spinning || !total(state.bets)) { if (!total(state.bets)) say('Setz zuerst einen Chip.', 'info'); return; }
+    if (spinning) return;
+    if (!total(state.bets)) { say('Setz zuerst einen Chip.', 'info'); return; }
     ensureAudio();
     clearShown();
     spinning = true; render();
     say('Rien ne va plus.', 'info');
     $('hub').classList.add('dim');
+    $('wheelWrap').classList.remove('glow');
+    buzz(15);
     if (matchMedia('(max-width: 859px)').matches) {
       const r = $('wheelWrap').getBoundingClientRect();
       if (r.top < 0 || r.bottom > innerHeight * .6) $('wheelWrap').scrollIntoView({behavior: reduced ? 'auto' : 'smooth', block: 'start'});
     }
-    const n = rand37(), idx = ORDER.indexOf(n);
-    const dur = reduced ? 900 : 6200;
-    const w0 = wheelAngle, w1 = w0 + TAU * 2.5 + Math.random() * TAU;
+    const idx = randPocket(), n = ORDER[idx];
+    const dur = reduced ? 700 : 4200;
+    const w0 = wheelAngle, w1 = w0 + TAU * 4 + Math.random() * TAU;
     const r0 = ballRel, target = idx * STEP;
-    const r1 = r0 - (mod(r0 - target, TAU) + TAU * 7);
+    const r1 = r0 - (mod(r0 - target, TAU) + TAU * 10);
     const t0 = performance.now();
-    let lastPocket = null;
+    let lastPocket = null, lastTick = 0, landed = false;
+    prevBall = null;
     sfx.launch();
     const frame = now => {
       const t = Math.min(1, (now - t0) / dur);
-      wheelAngle = w0 + (w1 - w0) * easeOutQuart(t);
-      const tb = Math.min(1, t / .86);
+      wheelAngle = w0 + (w1 - w0) * easeOutQuint(t);
+      const tb = Math.min(1, t / .82);
       ballRel = r0 + (r1 - r0) * easeOutCubic(tb);
-      // Radius: oben auf der Bahn, dann Fall mit kleinen Hüpfern in die Tasche
-      if (t < .55) ballR = .915;
-      else if (t < .86) {
-        const u = (t - .55) / .31;
-        ballR = .915 + (.655 - .915) * easeOutCubic(u) + Math.abs(Math.sin(u * Math.PI * 3.5)) * .05 * (1 - u);
+      blur = Math.max(0, 1 - tb * 1.6);
+      if (t < .45) ballR = .915;
+      else if (t < .82) {
+        const u = (t - .45) / .37;
+        ballR = .915 + (.655 - .915) * easeOutCubic(u) + Math.abs(Math.sin(u * Math.PI * 4)) * .055 * (1 - u);
       } else ballR = .655;
-      if (t > .5) {
+      if (!landed && t >= .82) { landed = true; sfx.land(); buzz(20); }
+      if (t > .4) {
         const p = Math.floor(mod(ballRel, TAU) / STEP + .5);
-        if (lastPocket !== null && p !== lastPocket) sfx.tick(ballR < .8 ? 1 : .35);
+        if (lastPocket !== null && p !== lastPocket && now - lastTick > 28) { sfx.tick(ballR < .8 ? 1 : .35); lastTick = now; }
         lastPocket = p;
       }
       draw();
       if (t < 1) requestAnimationFrame(frame);
-      else { ballRel = mod(target, TAU); wheelAngle = mod(wheelAngle, TAU); settle(n, idx); }
+      else { ballRel = mod(target, TAU); wheelAngle = mod(wheelAngle, TAU); blur = 0; settle(n, idx); }
     };
     requestAnimationFrame(frame);
   }
@@ -571,11 +775,15 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     let ret = 0;
     for (const [k, v] of Object.entries(bets)) { const b = betOf(k); if (b.w(n)) ret += v * (b.m + 1); }
     const before = state.balance;
+    const net = ret - t;
     state.balance += ret;
     state.lastBets = {...bets};
     state.bets = {};
     state.history.unshift(n); state.history = state.history.slice(0, 30);
     state.lastIdx = idx;
+    state.rounds += 1; state.wagered += t; if (net > 0) state.wins += 1;
+    state.graph.push((state.graph[state.graph.length - 1] || 0) + net);
+    if (state.graph.length > 500) state.graph = state.graph.slice(-500);
     shown = {bets: {...bets}, n};
     lastResult = n;
     undo = [];
@@ -583,14 +791,18 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     save();
     setHub(n, true);
     render();
+    drawChart();
     countUp(before, state.balance);
     cells['n:' + n].classList.add('hit');
-    const net = ret - t;
-    const head = n + ' ' + colorName(n);
-    if (ret > 0 && net > 0) { say(head + ' · +' + fmt(net) + ' Gewinn', 'win'); flashBalance('up'); sfx.win(net / t); }
-    else if (ret > 0 && net === 0) { say(head + ' · Einsatz zurück', 'info'); }
-    else if (ret > 0) { say(head + ' · ' + fmt(net) + ' netto', 'lose'); sfx.lose(); }
-    else { say(head + ' · −' + fmt(t) + ' verloren', 'lose'); flashBalance('down'); sfx.lose(); }
+    const head = lab(n) + ' ' + colorName(n);
+    if (net > 0) {
+      const ratio = net / t;
+      say(head + ' · ' + signed(net), 'win', true);
+      flashBalance('up'); sfx.win(ratio); burst(ratio); buzz(ratio >= 10 ? [30, 40, 30, 40, 60] : [25, 30, 40]);
+      const w = $('wheelWrap'); void w.offsetWidth; w.classList.add('glow');
+    } else if (net === 0) say(head + ' · Einsatz zurück', 'info');
+    else if (ret > 0) { say(head + ' · ' + signed(net), 'lose'); sfx.lose(); }
+    else { say(head + ' · ' + signed(net), 'lose'); flashBalance('down'); sfx.lose(); }
   }
 
   // ---------- Klang ----------
@@ -618,14 +830,15 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
     o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + .05);
   }
   const sfx = {
-    chip() { noise(.05, 2600, .5, 3); setTimeout(() => noise(.04, 3400, .35, 4), 45); },
-    tick(k) { noise(.025, 4200, .35 * k, 10); },
-    launch() { noise(.25, 900, .25, 1.5); },
+    chip() { noise(.05, 2600, .5, 3); setTimeout(() => noise(.04, 3400, .35, 4), 40); },
+    tick(k) { noise(.022, 4400, .32 * k, 10); },
+    launch() { noise(.35, 700, .3, 1.2); tone(180, 0, .25, .05, 'triangle'); },
+    land() { noise(.06, 1800, .7, 2); setTimeout(() => noise(.04, 2400, .4, 3), 70); },
     win(ratio) {
-      const notes = ratio >= 10 ? [523, 659, 784, 1047, 1319] : [523, 659, 784];
-      notes.forEach((f, i) => tone(f, i * .09, .5, .12, 'triangle'));
+      const notes = ratio >= 10 ? [523, 659, 784, 1047, 1319, 1568] : ratio >= 2 ? [523, 659, 784, 1047] : [587, 784];
+      notes.forEach((f, i) => tone(f, i * .075, .55, .12, 'triangle'));
     },
-    lose() { tone(220, 0, .35, .07, 'sine'); },
+    lose() { tone(196, 0, .3, .06); },
   };
 
   renderSound();
@@ -634,6 +847,5 @@ button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline
 })();
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
-
 </body>
 </html>
