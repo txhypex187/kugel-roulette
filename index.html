@@ -163,7 +163,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .chip[data-v="all"] span{font-size:11px;letter-spacing:.02em}
 .chip[aria-checked="true"]{transform:translateY(-6px) scale(1.06);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent),0 8px 0 rgba(0,0,0,.15)}
 .chip:disabled{opacity:.35;cursor:not-allowed}
-.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .tool{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:transparent;border-radius:12px;padding:6px 2px;font-size:11px;font-weight:700;color:var(--muted)}
 .tool svg{width:20px;height:20px;stroke:var(--fg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tool:active{background:var(--line)}
@@ -237,7 +237,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <div class="tools">
       <button class="tool" id="undoBtn"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Zurück</button>
       <button class="tool" id="clearBtn"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Leeren</button>
-      <button class="tool" id="repeatBtn"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>Nochmal</button>
       <button class="tool" id="doubleBtn"><svg viewBox="0 0 24 24"><text x="12" y="17" text-anchor="middle" font-size="13" font-weight="800" style="fill:var(--fg);stroke:none;font-family:var(--body)">2×</text></svg>Doppeln</button>
     </div>
     <button class="spin" id="spinBtn">Drehen <span class="amt" id="stake"></span></button>
@@ -448,14 +447,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     if (spinning) return;
     state.balance += total(state.bets); state.bets = {}; undo = []; clearShown(); save(); render();
   };
-  $('repeatBtn').onclick = () => {
-    if (spinning || !state.lastBets || total(state.bets)) return;
-    const t = total(state.lastBets);
-    if (t > state.balance) { say('Zu wenig Guthaben für ' + fmt(t) + '.', 'lose'); return; }
-    clearShown();
-    for (const [k, v] of Object.entries(state.lastBets)) { state.bets[k] = v; undo.push({key: k, a: v}); }
-    state.balance -= t; sfx.chip(); save(); render();
-  };
   $('doubleBtn').onclick = () => {
     if (spinning) return;
     const t = total(state.bets); if (!t) return;
@@ -492,13 +483,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     for (const [k, v] of Object.entries(src)) {
       const s = document.createElement('span');
       s.className = 'stack ' + stackClass(v);
-      if (!t && shown) s.classList.add(betOf(k).w(shown.n) ? 'won' : 'lost');
+      if (shown) { const w = betOf(k).w(shown.n); if (w) s.classList.add('won'); else if (!t) s.classList.add('lost'); }
       s.textContent = short(v);
       cells[k].appendChild(s);
     }
     $('undoBtn').disabled = spinning || !undo.length;
     $('clearBtn').disabled = spinning || !t;
-    $('repeatBtn').disabled = spinning || !!t || !state.lastBets || total(state.lastBets) > state.balance;
     $('doubleBtn').disabled = spinning || !t || t > state.balance;
     $('spinBtn').disabled = spinning || !t;
     renderChips(); renderHistory(); renderStats();
@@ -788,6 +778,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     shown = {bets: {...bets}, n};
     lastResult = n;
     undo = [];
+    // gleiche Einsätze bleiben für die nächste Runde liegen
+    const kept = t <= state.balance;
+    if (kept) { state.bets = {...bets}; state.balance -= t; for (const [k, v] of Object.entries(bets)) undo.push({key: k, a: v}); }
     spinning = false;
     save();
     setHub(n, true);
@@ -804,6 +797,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     } else if (net === 0) say(head + ' · Einsatz zurück', 'info');
     else if (ret > 0) { say(head + ' · ' + signed(net), 'lose'); sfx.lose(); }
     else { say(head + ' · ' + signed(net), 'lose'); flashBalance('down'); sfx.lose(); }
+    if (!kept) setTimeout(() => say('Zu wenig Guthaben, um die Einsätze liegen zu lassen.', 'info'), 1600);
   }
 
   // ---------- Klang ----------
