@@ -55,13 +55,13 @@
 }
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--fg)}
-body{overflow-x:clip;margin:0;font-family:var(--body);font-size:15px;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body{margin:0;font-family:var(--body);font-size:15px;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .app{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:14px 0;display:grid;gap:16px;
-  grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "wheel" "graph" "table" "controls"}
+  grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "wheel" "table" "controls" "graph"}
 @media (min-width:860px){
   .app{grid-template-columns:minmax(0,1fr) minmax(0,440px);grid-template-areas:"top top" "wheel table" "graph table" "controls table";align-items:start;column-gap:40px;padding-block:24px 32px}
 }
@@ -81,7 +81,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .icon-btn.armed{border-color:var(--lose);color:var(--lose)}
 
 /* Kessel */
-.wheel-area{grid-area:wheel;display:grid;gap:12px;justify-items:center}
+.wheel-area{grid-area:wheel;overflow-x:clip;display:grid;gap:12px;justify-items:center}
 .wheel-wrap{position:relative;width:min(100%,370px);aspect-ratio:1;max-width:100%;border-radius:50%}
 .wheel-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .wheel-wrap #fx{pointer-events:none;inset:-12%;width:124%;height:124%}
@@ -115,30 +115,32 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .graph-sub b{color:var(--fg);font-weight:700}
 #chart{display:block;width:100%;height:76px;margin-top:6px}
 
-/* Tableau */
-.table-area{grid-area:table;display:grid;justify-items:center}
-.table{width:100%;max-width:440px;display:grid;grid-template-columns:40px repeat(6,minmax(0,1fr)) 50px;grid-template-rows:repeat(14,minmax(40px,auto));gap:3px;
-  background:var(--felt);padding:10px;border-radius:18px}
-.cell{position:relative;display:grid;place-items:center;border-radius:8px;font-weight:700;font-size:15px;color:var(--felt-ink);
-  border:1px solid var(--felt-line);background:transparent;user-select:none;-webkit-user-select:none;
-  font-variant-numeric:tabular-nums;transition:transform .08s, filter .15s;padding:0}
-.cell:active{transform:scale(.95)}
-@media (hover:hover){.cell:hover{filter:brightness(1.15)}}
-.cell.n{color:#fff;border-color:transparent}
-.cell.n.red{background:var(--red)} .cell.n.black{background:var(--black)}
-.cell.n.zero{background:var(--zero);font-size:17px}
-.cell.v{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12.5px;letter-spacing:.06em}
-.cell.v:active{transform:rotate(180deg) scale(.95)}
-.cell.col{font-size:12px;letter-spacing:.04em}
-.swatch{display:inline-block;width:12px;height:12px;transform:rotate(45deg);border-radius:2px;margin:4px 0}
-.swatch.r{background:var(--red)} .swatch.b{background:var(--black);box-shadow:0 0 0 1px var(--felt-line)}
-.cell.hit{z-index:2;box-shadow:0 0 0 3px var(--accent),0 0 18px 2px var(--accent);animation:hit 1s ease-in-out 3}
+/* Einsatzfeld */
+.board{grid-area:table;display:grid;gap:12px;width:100%;max-width:440px;justify-self:center;align-content:start}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.tabs button{border:0;background:transparent;border-radius:10px;padding:10px 6px;font-weight:700;font-size:14px;color:var(--muted);display:flex;justify-content:center;align-items:center;gap:6px}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+.badge{min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px}
+.badge:empty{display:none}
+.panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding-top:6px}
+.bet{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:14px;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-weight:800;font-size:16px;color:var(--fg);padding:8px;transition:transform .08s;font-variant-numeric:tabular-nums}
+.bet small{font-size:11px;font-weight:700;color:var(--muted)}
+.bet.half{grid-column:span 3} .bet.third{grid-column:span 2}
+.bet.red,.bet.black{color:#fff;border-color:transparent;min-height:80px;font-size:18px}
+.bet.red{background:var(--red)} .bet.black{background:var(--black);box-shadow:inset 0 0 0 1px var(--line)}
+.bet.red small,.bet.black small{color:rgba(255,255,255,.72)}
+.panel.nums{gap:6px}
+.num{position:relative;border:0;border-radius:10px;height:46px;font-weight:800;font-size:15px;color:#fff;font-variant-numeric:tabular-nums;padding:0;transition:transform .08s}
+.num.red{background:var(--red)} .num.black{background:var(--black);box-shadow:inset 0 0 0 1px var(--line)} .num.zero{background:var(--zero);grid-column:span 3}
+.bet:active,.num:active{transform:scale(.95)}
+.panel-hint{grid-column:1/-1;font-size:12px;color:var(--muted);font-weight:600;text-align:center;padding-top:2px}
+.hit{z-index:2;box-shadow:0 0 0 3px var(--accent),0 0 18px 2px var(--accent)!important;animation:hit 1s ease-in-out 3}
 @keyframes hit{50%{box-shadow:0 0 0 3px var(--accent),0 0 4px 0 var(--accent)}}
 
-.stack{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;display:grid;place-items:center;
-  font:800 10px/1 var(--body);color:var(--chip-ink);writing-mode:horizontal-tb;pointer-events:none;
-  box-shadow:0 2px 0 rgba(0,0,0,.35);animation:drop .2s cubic-bezier(.2,1.6,.4,1);z-index:1}
-.cell.v .stack{transform:rotate(180deg)}
+.stack{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font:800 10px/1 var(--body);color:var(--chip-ink);pointer-events:none;
+  box-shadow:0 2px 0 rgba(0,0,0,.35);animation:drop .2s cubic-bezier(.2,1.6,.4,1);z-index:3}
 .stack::before{content:"";position:absolute;inset:3px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.75)}
 .stack.d10{background:var(--c10);color:var(--c10-ink)} .stack.d10::before{border-color:rgba(0,0,0,.35)}
 .stack.d20{background:var(--c20)} .stack.d50{background:var(--c50)} .stack.dx{background:var(--cx)} .stack.dall{background:var(--call)}
@@ -227,8 +229,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <div class="graph-sub"><span>Runden <b id="sRounds">0</b></span><span>Gewonnen <b id="sWins">0</b></span><span>Gesetzt <b id="sWagered">0</b></span></div>
   </section>
 
-  <section class="table-area" aria-label="Tableau">
-    <div class="table" id="table"></div>
+  <section class="board" aria-label="Einsätze setzen">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="simple">Farben &amp; Bereiche <span class="badge" id="badgeSimple"></span></button>
+      <button role="tab" data-tab="nums">Zahlen <span class="badge" id="badgeNums"></span></button>
+    </div>
+    <div class="panel" id="panelSimple" role="tabpanel"></div>
+    <div class="panel nums" id="panelNums" role="tabpanel" hidden></div>
   </section>
 
   <section class="controls" aria-label="Einsätze">
@@ -312,35 +319,42 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   };
   const betOf = key => { const [t, v] = key.split(':'); return BETS[t](Number(v)); };
 
-  // ---------- Tableau ----------
-  const table = $('table');
+  // ---------- Einsatzfeld ----------
   const cells = {};
-  function addCell(key, html, cls, col, row, label) {
+  const panelSimple = $('panelSimple'), panelNums = $('panelNums');
+  function addBet(parent, key, html, cls, label) {
     const b = document.createElement('button');
-    b.className = 'cell ' + cls;
-    b.innerHTML = html;
-    b.style.gridColumn = col;
-    b.style.gridRow = row;
-    b.dataset.key = key;
+    b.className = cls; b.innerHTML = html; b.dataset.key = key;
     b.setAttribute('aria-label', label);
-    table.appendChild(b);
-    cells[key] = b;
+    parent.appendChild(b); cells[key] = b;
   }
-  addCell('n:0', '0', 'n zero', '2 / 5', '1', 'Null');
-  addCell('n:37', '00', 'n zero', '5 / 8', '1', 'Doppelnull');
-  for (let n = 1; n <= 36; n++) {
-    addCell('n:' + n, n, 'n ' + colorOf(n), (2 + ((n - 1) % 3) * 2) + ' / span 2', String(Math.floor((n - 1) / 3) + 2), n + ' ' + colorName(n));
-  }
-  [['1–12', 1], ['13–24', 2], ['25–36', 3]].forEach(([t, d]) =>
-    addCell('dz:' + d, t, 'v', '1', (2 + (d - 1) * 4) + ' / span 4', d + '. Dutzend'));
-  [['low', '1–18'], ['even', 'Gerade'], ['red', '<span class="swatch r"></span>'], ['black', '<span class="swatch b"></span>'], ['odd', 'Ungerade'], ['high', '19–36']]
-    .forEach(([k, t], i) => addCell(k, t, 'v', '8', (2 + i * 2) + ' / span 2',
-      {low: 'Niedrig 1 bis 18', even: 'Gerade', red: 'Rot', black: 'Schwarz', odd: 'Ungerade', high: 'Hoch 19 bis 36'}[k]));
-  [1, 2, 3].forEach(c => addCell('col:' + c, '2:1', 'col', (2 + (c - 1) * 2) + ' / span 2', '14', c + '. Kolonne'));
-  table.addEventListener('click', e => {
-    const c = e.target.closest('.cell');
+  addBet(panelSimple, 'red', 'Rot<small>×2</small>', 'bet half red', 'Rot');
+  addBet(panelSimple, 'black', 'Schwarz<small>×2</small>', 'bet half black', 'Schwarz');
+  addBet(panelSimple, 'even', 'Gerade<small>×2</small>', 'bet half', 'Gerade');
+  addBet(panelSimple, 'odd', 'Ungerade<small>×2</small>', 'bet half', 'Ungerade');
+  addBet(panelSimple, 'low', '1–18<small>×2</small>', 'bet half', '1 bis 18');
+  addBet(panelSimple, 'high', '19–36<small>×2</small>', 'bet half', '19 bis 36');
+  [['1–12', 1], ['13–24', 2], ['25–36', 3]].forEach(([t, d]) => addBet(panelSimple, 'dz:' + d, t + '<small>×3</small>', 'bet third', t));
+  addBet(panelNums, 'n:0', '0', 'num zero', 'Null');
+  addBet(panelNums, 'n:37', '00', 'num zero', 'Doppelnull');
+  for (let n = 1; n <= 36; n++) addBet(panelNums, 'n:' + n, n, 'num ' + colorOf(n), n + ' ' + colorName(n));
+  const hint = document.createElement('div'); hint.className = 'panel-hint'; hint.textContent = 'Volltreffer auf eine Zahl zahlt ×36';
+  panelNums.appendChild(hint);
+  [panelSimple, panelNums].forEach(p => p.addEventListener('click', e => {
+    const c = e.target.closest('[data-key]');
     if (c) place(c.dataset.key);
-  });
+  }));
+  // alte Kolonnen-Einsätze gibt es nicht mehr: zurückbuchen
+  for (const [k, v] of Object.entries(state.bets)) if (!cells[k]) { state.balance += v; delete state.bets[k]; }
+  if (state.lastBets) for (const k of Object.keys(state.lastBets)) if (!cells[k]) delete state.lastBets[k];
+  const tabBtns = document.querySelectorAll('.tabs button');
+  function setTab(t) {
+    state.tab = t;
+    panelSimple.hidden = t !== 'simple'; panelNums.hidden = t !== 'nums';
+    tabBtns.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  }
+  tabBtns.forEach(b => b.onclick = () => { setTab(b.dataset.tab); save(); });
+  setTab(state.tab === 'nums' ? 'nums' : 'simple');
 
   // ---------- Chips ----------
   const chipsEl = $('chips');
@@ -417,7 +431,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   // ---------- Aktionen ----------
   function clearShown() {
     shown = null;
-    if (lastResult !== null && cells['n:' + lastResult]) cells['n:' + lastResult].classList.remove('hit');
+    document.querySelectorAll('.hit').forEach(el => el.classList.remove('hit'));
   }
   function say(text, kind = 'info', big) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + kind + (big ? ' big' : ''); }
 
@@ -472,20 +486,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   $('soundBtn').onclick = () => { state.sound = !state.sound; save(); renderSound(); if (state.sound) { ensureAudio(); sfx.chip(); } };
 
   // ---------- Rendering ----------
-  const stackClass = (v, k) => v >= 1000 ? 'dall' : v >= 100 ? 'dx' : v >= 50 ? 'd50' : v >= 20 ? 'd20' : 'd10';
+  const stackClass = v => v >= 1000 ? 'dall' : v >= 100 ? 'dx' : v >= 50 ? 'd50' : v >= 20 ? 'd20' : 'd10';
   function render() {
     $('balance').textContent = fmt(state.balance);
     const t = total(state.bets);
     $('stake').textContent = t ? fmt(t) : '';
-    table.querySelectorAll('.stack').forEach(s => s.remove());
+    document.querySelectorAll('.stack').forEach(s => s.remove());
     const src = t ? state.bets : (shown ? shown.bets : {});
+    let inNums = 0, inSimple = 0;
     for (const [k, v] of Object.entries(src)) {
+      if (!cells[k]) continue;
+      if (t) { if (k.startsWith('n:')) inNums++; else inSimple++; }
       const s = document.createElement('span');
       s.className = 'stack ' + stackClass(v);
       if (shown) { const w = betOf(k).w(shown.n); if (w) s.classList.add('won'); else if (!t) s.classList.add('lost'); }
       s.textContent = short(v);
       cells[k].appendChild(s);
     }
+    $('badgeNums').textContent = inNums || '';
+    $('badgeSimple').textContent = inSimple || '';
     $('undoBtn').disabled = spinning || !undo.length;
     $('clearBtn').disabled = spinning || !t;
     $('doubleBtn').disabled = spinning || !t || t > state.balance;
@@ -786,7 +805,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     render();
     drawChart();
     countUp(before, state.balance);
-    cells['n:' + n].classList.add('hit');
+    for (const k of Object.keys(cells)) if (betOf(k).w(n)) cells[k].classList.add('hit');
     const head = lab(n) + ' ' + colorName(n);
     if (net > 0) {
       const ratio = net / t;
