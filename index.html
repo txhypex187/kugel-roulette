@@ -211,7 +211,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <canvas id="fx" aria-hidden="true"></canvas>
       <div class="hub" id="hub">–</div>
     </div>
-    <div class="msg info" id="msg" aria-live="polite">Wähle einen Chip und tippe aufs Feld.</div>
+    <div class="msg info" id="msg" aria-live="polite"></div>
     <div class="history" id="history" aria-label="Letzte Zahlen"></div>
   </section>
 
@@ -329,8 +329,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   addBet(panelNums, 'n:0', '0', 'num zero', 'Null');
   addBet(panelNums, 'n:37', '00', 'num zero', 'Doppelnull');
   for (let n = 1; n <= 36; n++) addBet(panelNums, 'n:' + n, n, 'num ' + colorOf(n), n + ' ' + colorName(n));
-  const hint = document.createElement('div'); hint.className = 'panel-hint'; hint.textContent = 'Volltreffer auf eine Zahl zahlt ×36';
-  panelNums.appendChild(hint);
   [panelSimple, panelNums].forEach(p => p.addEventListener('click', e => {
     const c = e.target.closest('[data-key]');
     if (c) place(c.dataset.key);
