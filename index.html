@@ -221,7 +221,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <span class="graph-val" id="profit">0</span>
     </div>
     <canvas id="chart" aria-hidden="true"></canvas>
-    <div class="graph-sub"><span>Runden <b id="sRounds">0</b></span><span>Gewonnen <b id="sWins">0</b></span><span>Gesetzt <b id="sWagered">0</b></span></div>
+    <div class="graph-sub"><span>Runden <b id="sRounds">0</b></span><span>Rekord <b id="sRecord">–</b></span><span>Gesetzt <b id="sWagered">0</b></span></div>
   </section>
 
   <section class="board" aria-label="Einsätze setzen">
@@ -456,12 +456,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     if (spinning) return;
     const b = $('resetBtn');
     if (!resetArmed) {
-      b.classList.add('armed'); say('Nochmal tippen: Graph und letzte Zahlen löschen.', 'lose');
+      b.classList.add('armed'); say('Nochmal tippen: Graph, Rekord und letzte Zahlen löschen.', 'lose');
       resetArmed = setTimeout(() => { b.classList.remove('armed'); resetArmed = null; say('', 'info'); }, 3000);
       return;
     }
     clearTimeout(resetArmed); resetArmed = null; b.classList.remove('armed');
-    Object.assign(state, {history: [], graph: [0], rounds: 0, wins: 0, wagered: 0});
+    Object.assign(state, {history: [], graph: [0], rounds: 0, wins: 0, wagered: 0, record: 0});
     clearShown(); save(); render(); drawChart(); setHub(null);
     say('Verlauf gelöscht. Dein Guthaben bleibt.', 'info');
   };
@@ -514,7 +514,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     el.textContent = signed(p);
     el.className = 'graph-val' + (p > 0 ? ' pos' : p < 0 ? ' neg' : '');
     $('sRounds').textContent = fmt(state.rounds);
-    $('sWins').textContent = fmt(state.wins);
+    $('sRecord').textContent = state.record ? fmt(state.record) : '–';
     $('sWagered').textContent = fmt(state.wagered);
   }
   function renderSound() {
@@ -778,6 +778,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     // gleiche Einsätze bleiben für die nächste Runde liegen
     const kept = t <= state.balance;
     if (kept) { state.bets = {...bets}; state.balance -= t; for (const [k, v] of Object.entries(bets)) undo.push({key: k, a: v}); }
+    // Rekord: höchster Geldstand nach einer Runde (Guthaben plus liegende Einsätze)
+    state.record = Math.max(state.record || 0, state.balance + total(state.bets));
     spinning = false;
     save();
     setHub(n, true);
