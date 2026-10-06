@@ -116,18 +116,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 #chart{display:block;width:100%;height:76px;margin-top:6px}
 
 /* Einsatzfeld */
-.board{grid-area:table;display:grid;gap:12px;width:100%;max-width:440px;justify-self:center;align-content:start}
-.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
-.tabs button{border:0;background:transparent;border-radius:10px;padding:10px 6px;font-weight:700;font-size:14px;color:var(--muted);display:flex;justify-content:center;align-items:center;gap:6px}
-.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
-.badge{min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px}
-.badge:empty{display:none}
-.panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding-top:6px}
+.board{grid-area:table;display:grid;gap:14px;width:100%;max-width:440px;justify-self:center;align-content:start}
+.panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .bet{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:14px;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   font-weight:800;font-size:16px;color:var(--fg);padding:8px;transition:transform .08s;font-variant-numeric:tabular-nums}
 .bet small{font-size:11px;font-weight:700;color:var(--muted)}
 .bet.half{grid-column:span 3} .bet.third{grid-column:span 2}
-.bet.red,.bet.black{color:#fff;border-color:transparent;min-height:80px;font-size:18px}
+.bet.red,.bet.black{color:#fff;border-color:transparent;min-height:64px;font-size:18px}
 .bet.red{background:var(--red)} .bet.black{background:var(--black);box-shadow:inset 0 0 0 1px var(--line)}
 .bet.red small,.bet.black small{color:rgba(255,255,255,.72)}
 .panel.nums{gap:6px}
@@ -230,12 +225,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   </section>
 
   <section class="board" aria-label="Einsätze setzen">
-    <div class="tabs" role="tablist">
-      <button role="tab" data-tab="simple">Farben &amp; Bereiche <span class="badge" id="badgeSimple"></span></button>
-      <button role="tab" data-tab="nums">Zahlen <span class="badge" id="badgeNums"></span></button>
-    </div>
-    <div class="panel" id="panelSimple" role="tabpanel"></div>
-    <div class="panel nums" id="panelNums" role="tabpanel" hidden></div>
+    <div class="panel nums" id="panelNums"></div>
+    <div class="panel" id="panelSimple"></div>
   </section>
 
   <section class="controls" aria-label="Einsätze">
@@ -347,14 +338,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   // alte Kolonnen-Einsätze gibt es nicht mehr: zurückbuchen
   for (const [k, v] of Object.entries(state.bets)) if (!cells[k]) { state.balance += v; delete state.bets[k]; }
   if (state.lastBets) for (const k of Object.keys(state.lastBets)) if (!cells[k]) delete state.lastBets[k];
-  const tabBtns = document.querySelectorAll('.tabs button');
-  function setTab(t) {
-    state.tab = t;
-    panelSimple.hidden = t !== 'simple'; panelNums.hidden = t !== 'nums';
-    tabBtns.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
-  }
-  tabBtns.forEach(b => b.onclick = () => { setTab(b.dataset.tab); save(); });
-  setTab(state.tab === 'nums' ? 'nums' : 'simple');
 
   // ---------- Chips ----------
   const chipsEl = $('chips');
@@ -493,18 +476,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     $('stake').textContent = t ? fmt(t) : '';
     document.querySelectorAll('.stack').forEach(s => s.remove());
     const src = t ? state.bets : (shown ? shown.bets : {});
-    let inNums = 0, inSimple = 0;
     for (const [k, v] of Object.entries(src)) {
       if (!cells[k]) continue;
-      if (t) { if (k.startsWith('n:')) inNums++; else inSimple++; }
       const s = document.createElement('span');
       s.className = 'stack ' + stackClass(v);
       if (shown) { const w = betOf(k).w(shown.n); if (w) s.classList.add('won'); else if (!t) s.classList.add('lost'); }
       s.textContent = short(v);
       cells[k].appendChild(s);
     }
-    $('badgeNums').textContent = inNums || '';
-    $('badgeSimple').textContent = inSimple || '';
     $('undoBtn').disabled = spinning || !undo.length;
     $('clearBtn').disabled = spinning || !t;
     $('doubleBtn').disabled = spinning || !t || t > state.balance;
