@@ -118,7 +118,7 @@ body{height:100%}
 .graph-val{margin-left:auto;font-family:var(--display);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
 .graph-val.pos{color:var(--win)} .graph-val.neg{color:var(--lose)}
 .chart-box{position:relative;flex:1;min-height:24px;margin-top:4px}
-#chart{position:absolute;inset:0;display:block;width:100%;height:100%}
+.chart-box canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
 .graph-sub{display:flex;flex-wrap:wrap;column-gap:10px;font-size:10.5px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .graph-sub b{color:var(--fg);font-weight:700}
 @media (min-width:860px){.side{flex-direction:column}.msg{font-size:15px}}
@@ -186,6 +186,8 @@ body{height:100%}
 .lobby-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
 .lobby-head{display:flex;align-items:center;justify-content:space-between;padding-top:6px}
 .lobby .brand{font-size:28px}
+.lobby-graph{height:150px;flex:none;padding:12px 14px}
+.lobby-graph .graph-val{font-size:20px}
 .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .game{aspect-ratio:1;border-radius:22px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center;color:var(--fg)}
 .game.live{background:var(--felt);border-color:transparent;color:var(--felt-ink);transition:transform .12s}
@@ -276,6 +278,11 @@ body{height:100%}
     <div class="lobby-head">
       <div class="brand">Casino</div>
       <button class="bal" id="lobbyBalBtn" aria-label="Guthaben ändern"><div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div><div class="bal-val" id="lobbyBal">100</div></button>
+    </div>
+    <div class="graph lobby-graph" aria-label="Gewinn und Verlust">
+      <div class="graph-head"><span class="graph-label">Gewinn / Verlust</span><span class="graph-val" id="lobbyProfit">0</span></div>
+      <div class="chart-box"><canvas id="lobbyChart" aria-hidden="true"></canvas></div>
+      <div class="graph-sub"><span>Runden <b id="lRounds">0</b></span><span>Rekord <b id="lRecord">–</b></span><span>Gesetzt <b id="lWagered">0</b></span></div>
     </div>
     <div class="games">
       <button class="game live" id="playRoulette">
@@ -561,6 +568,11 @@ body{height:100%}
     $('sRounds').textContent = fmt(state.rounds);
     $('sRecord').textContent = state.record ? fmt(state.record) : '–';
     $('sWagered').textContent = fmt(state.wagered);
+    const lp = $('lobbyProfit');
+    lp.textContent = el.textContent; lp.className = el.className;
+    $('lRounds').textContent = $('sRounds').textContent;
+    $('lRecord').textContent = $('sRecord').textContent;
+    $('lWagered').textContent = $('sWagered').textContent;
   }
   function renderSound() {
     const b = $('soundBtn');
@@ -591,9 +603,10 @@ body{height:100%}
   }
 
   // ---------- Graph ----------
-  const chart = $('chart'), cctx = chart.getContext('2d');
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  function drawChart() {
+  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); }
+  function drawChartOn(chart) {
+    const cctx = chart.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     const W = chart.clientWidth, H = chart.clientHeight;
     if (!W) return;
@@ -626,7 +639,8 @@ body{height:100%}
       g.beginPath(); g.arc(X(pts.length - 1), Y(last), 3.5, 0, TAU); g.fill();
     }
   }
-  new ResizeObserver(drawChart).observe(chart);
+  new ResizeObserver(() => drawChartOn($('chart'))).observe($('chart'));
+  new ResizeObserver(() => drawChartOn($('lobbyChart'))).observe($('lobbyChart'));
 
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
@@ -881,6 +895,7 @@ body{height:100%}
     $('lobby').hidden = !on;
     $('lobbyBal').textContent = fmt(state.balance + total(state.bets));
     state.view = on ? 'lobby' : 'roulette'; save();
+    if (on) { renderStats(); requestAnimationFrame(() => drawChartOn($('lobbyChart'))); }
   }
   $('exitBtn').onclick = () => { if (!spinning) showLobby(true); };
   $('playRoulette').onclick = () => { showLobby(false); requestAnimationFrame(() => { resize(); drawChart(); }); };
