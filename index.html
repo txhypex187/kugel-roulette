@@ -186,7 +186,6 @@ body{height:100%}
 .lobby-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
 .lobby-head{display:flex;align-items:center;justify-content:space-between;padding-top:6px}
 .lobby .brand{font-size:28px}
-.bal-static{text-align:right}
 .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .game{aspect-ratio:1;border-radius:22px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center;color:var(--fg)}
 .game.live{background:var(--felt);border-color:transparent;color:var(--felt-ink);transition:transform .12s}
@@ -276,7 +275,7 @@ body{height:100%}
   <div class="lobby-in">
     <div class="lobby-head">
       <div class="brand">Kugel<small>Spielgeld-Casino</small></div>
-      <div class="bal-static"><div class="bal-label">Guthaben</div><div class="bal-val" id="lobbyBal">100</div></div>
+      <button class="bal" id="lobbyBalBtn" aria-label="Guthaben ändern"><div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div><div class="bal-val" id="lobbyBal">100</div></button>
     </div>
     <div class="games">
       <button class="game live" id="playRoulette">
@@ -437,13 +436,13 @@ body{height:100%}
     e.target.value = digits ? fmt(Number(digits)) : '';
   });
 
-  $('balBtn').onclick = () => {
+  $('balBtn').onclick = $('lobbyBalBtn').onclick = () => {
     if (spinning) return;
     openSheet({
       title: 'Guthaben festlegen',
       hint: 'So viel Spielgeld hast du danach frei. Gewinn und Verlust im Graphen bleiben unverändert.',
       value: state.balance, quick: [100, 1000, 10000, 100000],
-      onOk: v => { state.balance = v; save(); render(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
+      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + total(state.bets)); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
     });
   };
   function openCustom() {
