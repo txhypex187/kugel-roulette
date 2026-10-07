@@ -201,7 +201,9 @@ body{height:100%}
 
 /* Blackjack */
 .bj{position:fixed;inset:0;z-index:14;background:var(--bg);padding:max(10px, env(safe-area-inset-top, 0px)) 14px max(10px, env(safe-area-inset-bottom, 0px))}
-.bj-in{height:100%;max-width:560px;margin:0 auto;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px}
+.bj-in{height:100%;max-width:560px;margin:0 auto;display:grid;grid-template-rows:auto 96px minmax(0,1fr) auto;gap:10px}
+.bj-graph{flex:none;min-height:0}
+.bj .felt{width:100%;max-height:400px;align-self:center;height:100%}
 .bj-top{grid-area:auto}
 .bj-top .brand{margin-right:auto}
 .bj-top .bal{margin-left:0}
@@ -209,7 +211,7 @@ body{height:100%}
   box-shadow:inset 0 0 0 1px var(--felt-line),inset 0 0 60px rgba(0,0,0,.25)}
 .zone{display:flex;flex-direction:column;align-items:center;gap:10px;min-height:0}
 .zone-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;opacity:.8;display:flex;align-items:center;gap:8px}
-.cards{display:flex;justify-content:center;--cw:clamp(46px, 10dvh, 84px);min-height:calc(var(--cw) * 1.4)}
+.cards{display:flex;justify-content:center;--cw:clamp(44px, 8dvh, 62px);min-height:calc(var(--cw) * 1.4)}
 .card{width:var(--cw);height:calc(var(--cw) * 1.4);flex:none;border-radius:calc(var(--cw) * .1);background:#FBFAF6;color:#1C1F1D;position:relative;margin-left:calc(var(--cw) * -.32);
   box-shadow:0 3px 10px rgba(0,0,0,.35);font-weight:800;font-family:var(--body)}
 .card:first-child{margin-left:0}
@@ -226,10 +228,10 @@ body{height:100%}
 .total.bust{background:#C0392B} .total.natural{background:#D2A458;color:#1A1408}
 .hands{display:flex;justify-content:center;gap:14px;width:100%}
 .hand{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px;border-radius:16px;min-width:0;transition:background .2s, box-shadow .2s}
-.hands:has(.hand + .hand) .cards{--cw:clamp(40px, 8.5dvh, 70px)}
+.hands:has(.hand + .hand) .cards{--cw:clamp(38px, 7dvh, 54px)}
 .hand.active{background:rgba(255,255,255,.08);box-shadow:0 0 0 2px #D2A458}
 .hand-info{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;min-height:24px}
-.spot{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;margin-top:6px}
+.spot{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;margin-top:4px}
 .spot-ring{width:40px;height:40px;border-radius:50%;border:2px dashed var(--felt-line)}
 .chipstack{position:relative;width:40px;height:calc(40px + 4px * 6)}
 .sc{position:absolute;left:0;bottom:calc(var(--i) * 4px);width:40px;height:40px;border-radius:50%;box-shadow:0 2px 0 rgba(0,0,0,.35),0 3px 6px rgba(0,0,0,.25)}
@@ -361,6 +363,10 @@ body{height:100%}
         <div class="bal-val" id="bjBal">100</div>
       </button>
     </header>
+    <div class="graph bj-graph" aria-label="Gewinn und Verlust">
+      <div class="graph-head"><span class="graph-label">Gewinn / Verlust</span><span class="graph-val" id="bjProfit">0</span></div>
+      <div class="chart-box"><canvas id="bjChart" aria-hidden="true"></canvas></div>
+    </div>
     <section class="felt" aria-label="Tisch">
       <div class="zone">
         <div class="zone-label">Dealer <span id="bjDealerTotal"></span></div>
@@ -663,6 +669,7 @@ body{height:100%}
     $('sWagered').textContent = fmt(state.wagered);
     const lp = $('lobbyProfit');
     lp.textContent = el.textContent; lp.className = el.className;
+    $('bjProfit').textContent = el.textContent; $('bjProfit').className = el.className;
     $('lRounds').textContent = $('sRounds').textContent;
     $('lRecord').textContent = $('sRecord').textContent;
     $('lWagered').textContent = $('sWagered').textContent;
@@ -697,7 +704,7 @@ body{height:100%}
 
   // ---------- Graph ----------
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); }
+  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); }
   function drawChartOn(chart) {
     const cctx = chart.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -734,6 +741,7 @@ body{height:100%}
   }
   new ResizeObserver(() => drawChartOn($('chart'))).observe($('chart'));
   new ResizeObserver(() => drawChartOn($('lobbyChart'))).observe($('lobbyChart'));
+  new ResizeObserver(() => drawChartOn($('bjChart'))).observe($('bjChart'));
 
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
@@ -1157,7 +1165,7 @@ body{height:100%}
     state.bjRepeat = bj.lastBet <= state.balance ? bj.lastBet : 0;   // Einsatz bleibt liegen
     state.record = Math.max(state.record || 0, state.balance + total(state.bets) + state.bjBet);
     bj.phase = 'done'; busy = false;
-    save(); render(); renderStats();
+    save(); render(); renderStats(); drawChart();
     if (net > 0) { bjSay('+' + fmt(net), 'win'); sfx.win(net / staked); buzz([25, 30, 40]); }
     else if (net === 0) bjSay('Einsatz zurück');
     else { bjSay('−' + fmt(-net), 'lose'); sfx.lose(); }
@@ -1226,7 +1234,7 @@ body{height:100%}
     state.view = v; save();
     if (v === 'lobby') { renderStats(); requestAnimationFrame(() => drawChartOn($('lobbyChart'))); }
     if (v === 'roulette') requestAnimationFrame(() => { resize(); drawChart(); });
-    if (v === 'blackjack') bjRender();
+    if (v === 'blackjack') { bjRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('bjChart'))); }
   }
   $('exitBtn').onclick = () => { if (!spinning) showView('lobby'); };
   $('bjExit').onclick = () => { if (bj.phase === 'bet' || bj.phase === 'done') showView('lobby'); };
