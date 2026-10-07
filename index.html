@@ -181,6 +181,23 @@ body{height:100%}
 .spin .amt{font-family:var(--display);font-weight:600;font-size:16px;opacity:.9}
 .spin .amt:empty{display:none}
 
+/* Menü */
+.lobby{position:fixed;inset:0;z-index:15;background:var(--bg);overflow:auto;padding:max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));animation:fade .18s}
+.lobby-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
+.lobby-head{display:flex;align-items:center;justify-content:space-between;padding-top:6px}
+.lobby .brand{font-size:28px}
+.bal-static{text-align:right}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.game{aspect-ratio:1;border-radius:22px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center;color:var(--fg)}
+.game.live{background:var(--felt);border-color:transparent;color:var(--felt-ink);transition:transform .12s}
+.game.live:active{transform:scale(.97)}
+.game.soon{border-style:dashed;color:var(--muted)}
+.game-icon{width:56px;height:56px;display:grid;place-items:center;font-family:var(--display);font-size:34px;font-weight:600}
+.game-icon svg{width:56px;height:56px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round}
+.game-icon .ball{fill:#fff;stroke:none}
+.game-name{font-family:var(--display);font-weight:600;font-size:20px}
+.game-sub{font-size:12px;font-weight:600;opacity:.75}
+
 /* Eingabe-Sheet */
 .sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
 @keyframes fade{from{opacity:0}}
@@ -202,6 +219,9 @@ body{height:100%}
 <body>
 <div class="app">
   <header class="top">
+    <button class="icon-btn" id="exitBtn" aria-label="Zum Menü" title="Zum Menü">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <div class="brand">Kugel<small>Roulette · Spielgeld</small></div>
     <button class="bal" id="balBtn" aria-label="Guthaben ändern">
       <div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
@@ -250,6 +270,24 @@ body{height:100%}
     </div>
   </section>
 
+</div>
+
+<div class="lobby" id="lobby" hidden>
+  <div class="lobby-in">
+    <div class="lobby-head">
+      <div class="brand">Kugel<small>Spielgeld-Casino</small></div>
+      <div class="bal-static"><div class="bal-label">Guthaben</div><div class="bal-val" id="lobbyBal">100</div></div>
+    </div>
+    <div class="games">
+      <button class="game live" id="playRoulette">
+        <span class="game-icon"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/><circle cx="24" cy="24" r="9"/><path d="M24 4v11M24 33v11M4 24h11M33 24h11M9.9 9.9l7.8 7.8M30.3 30.3l7.8 7.8M38.1 9.9l-7.8 7.8M17.7 30.3l-7.8 7.8"/><circle cx="24" cy="8.5" r="2.4" class="ball"/></svg></span>
+        <span class="game-name">Roulette</span><span class="game-sub">0 und 00</span>
+      </button>
+      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 2</span><span class="game-sub">Bald verfügbar</span></div>
+      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 3</span><span class="game-sub">Bald verfügbar</span></div>
+      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 4</span><span class="game-sub">Bald verfügbar</span></div>
+    </div>
+  </div>
 </div>
 
 <div class="sheet-bg" id="sheetBg" hidden>
@@ -838,6 +876,16 @@ body{height:100%}
     },
     lose() { tone(196, 0, .3, .06); },
   };
+
+  // ---------- Menü ----------
+  function showLobby(on) {
+    $('lobby').hidden = !on;
+    $('lobbyBal').textContent = fmt(state.balance + total(state.bets));
+    state.view = on ? 'lobby' : 'roulette'; save();
+  }
+  $('exitBtn').onclick = () => { if (!spinning) showLobby(true); };
+  $('playRoulette').onclick = () => { showLobby(false); requestAnimationFrame(() => { resize(); drawChart(); }); };
+  if (state.view === 'lobby') showLobby(true);
 
   renderSound();
   render();
