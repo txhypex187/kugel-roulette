@@ -229,7 +229,15 @@ body{height:100%}
 .hands:has(.hand + .hand) .cards{--cw:clamp(40px, 8.5dvh, 70px)}
 .hand.active{background:rgba(255,255,255,.08);box-shadow:0 0 0 2px #D2A458}
 .hand-info{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;min-height:24px}
-.hand-bet{font-size:12px;font-weight:800;padding:3px 8px;border-radius:999px;border:1px dashed var(--felt-line);font-variant-numeric:tabular-nums}
+.spot{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;margin-top:6px}
+.spot-ring{width:40px;height:40px;border-radius:50%;border:2px dashed var(--felt-line)}
+.chipstack{position:relative;width:40px;height:calc(40px + 4px * 6)}
+.sc{position:absolute;left:0;bottom:calc(var(--i) * 4px);width:40px;height:40px;border-radius:50%;box-shadow:0 2px 0 rgba(0,0,0,.35),0 3px 6px rgba(0,0,0,.25)}
+.sc::before{content:"";position:absolute;inset:4px;border-radius:50%;border:2px dashed rgba(255,255,255,.75)}
+.sc.c10{background:var(--c10)} .sc.c10::before{border-color:rgba(0,0,0,.3)} .sc.c20{background:var(--c20)} .sc.c50{background:var(--c50)} .sc.cx{background:var(--cx)}
+.sc.drop{animation:chipdrop .28s cubic-bezier(.3,1.4,.5,1)}
+@keyframes chipdrop{from{transform:translateY(-26px);opacity:0}to{transform:none;opacity:1}}
+.spot-amt{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
 .hand-res{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;animation:pop2 .4s cubic-bezier(.2,1.7,.4,1)}
 .hand-res.win{background:#FBFAF6;color:#1D5440} .hand-res.lose{background:rgba(0,0,0,.45);color:#fff} .hand-res.push{background:rgba(255,255,255,.2);color:#fff}
 .bj-msg{align-self:center;text-align:center;font-family:var(--display);font-weight:600;font-size:26px;min-height:34px;font-variant-numeric:tabular-nums}
@@ -361,6 +369,7 @@ body{height:100%}
       <div class="bj-msg" id="bjMsg" aria-live="polite"></div>
       <div class="zone">
         <div class="hands" id="bjHands"></div>
+        <div class="spot" id="bjSpot"></div>
       </div>
     </section>
     <section class="controls bj-ctrl" aria-label="Aktionen">
@@ -372,9 +381,9 @@ body{height:100%}
         </div>
       </div>
       <div id="bjActBar" class="bj-actions" hidden>
-        <button id="bjHit">Ziehen</button>
-        <button id="bjStand" class="stand">Stehen</button>
-        <button id="bjSplit">Teilen</button>
+        <button id="bjHit">Hit</button>
+        <button id="bjStand" class="stand">Stand</button>
+        <button id="bjSplit">Split</button>
       </div>
     </section>
   </div>
@@ -998,6 +1007,7 @@ body{height:100%}
   const isNatural = h => h.cards.length === 2 && !h.split && handValue(h.cards).t === 21;
 
   if (typeof state.bjBet !== 'number') state.bjBet = 0;
+  if (typeof state.bjRepeat !== 'number') state.bjRepeat = 0;   // liegengebliebener Einsatz, wird erst beim Geben abgebucht
   if (state.bjPending) { state.balance += state.bjPending; state.bjPending = 0; save(); }  // abgebrochene Runde zurückbuchen
   let bj = {phase: 'bet', dealer: [], hole: true, hands: [], active: 0};
   let busy = false;
@@ -1026,13 +1036,19 @@ body{height:100%}
     if (v === 'custom' && !state.custom) { openCustom(); setTimeout(bjRender, 0); return; }
     let a = v === 'all' ? state.balance : v === 'custom' ? state.custom : Number(v);
     if (state.balance <= 0) { bjSay('Kein Guthaben frei'); return; }
+    if (!state.bjBet && state.bjRepeat) placeRepeat();
     a = Math.min(a, state.balance);
+    if (a <= 0) { bjSay('Kein Guthaben frei'); return; }
     state.balance -= a; state.bjBet += a;
     sfx.chip(); buzz(8); save(); bjRender(); render();
   }
+  function placeRepeat() {
+    if (state.bjRepeat <= state.balance) { state.balance -= state.bjRepeat; state.bjBet = state.bjRepeat; }
+    state.bjRepeat = 0;
+  }
   $('bjClear').onclick = () => {
     if (!(bj.phase === 'bet' || bj.phase === 'done')) return;
-    state.balance += state.bjBet; state.bjBet = 0; save(); bjRender(); render();
+    state.balance += state.bjBet; state.bjBet = 0; state.bjRepeat = 0; save(); bjRender(); render();
   };
 
   function bjSay(t, kind) { const m = $('bjMsg'); m.textContent = t; m.className = 'bj-msg' + (kind ? ' ' + kind : ''); }
@@ -1045,6 +1061,8 @@ body{height:100%}
 
   $('bjDeal').onclick = async () => {
     if (busy || !(bj.phase === 'bet' || bj.phase === 'done')) return;
+    if (!state.bjBet && state.bjRepeat > state.balance) { bjSay('Nicht genug Guthaben'); return; }
+    if (!state.bjBet && state.bjRepeat) placeRepeat();
     if (!state.bjBet) { bjSay('Setz zuerst einen Chip'); return; }
     ensureAudio(); busy = true;
     const bet = state.bjBet;
@@ -1136,7 +1154,7 @@ body{height:100%}
     state.rounds += 1; state.wagered += staked; if (net > 0) state.wins += 1;
     state.graph.push((state.graph[state.graph.length - 1] || 0) + net);
     if (state.graph.length > 500) state.graph = state.graph.slice(-500);
-    if (bj.lastBet <= state.balance) { state.bjBet = bj.lastBet; state.balance -= bj.lastBet; }   // Einsatz bleibt liegen
+    state.bjRepeat = bj.lastBet <= state.balance ? bj.lastBet : 0;   // Einsatz bleibt liegen
     state.record = Math.max(state.record || 0, state.balance + total(state.bets) + state.bjBet);
     bj.phase = 'done'; busy = false;
     save(); render(); renderStats();
@@ -1159,6 +1177,19 @@ body{height:100%}
     const cls = t > 21 ? ' bust' : (cards.length === 2 && t === 21 && !extra) ? ' natural' : '';
     return `<span class="total${cls}">${soft && t < 21 ? (t - 10) + '/' + t : t}</span>`;
   }
+  // Chipstapel auf dem Tisch
+  let spotShown = 0;
+  function renderSpot(amt) {
+    const spot = $('bjSpot');
+    if (!amt) { spot.innerHTML = '<div class="spot-ring"></div>'; spotShown = 0; return; }
+    const chips = [];
+    let rest = amt;
+    for (const v of [50, 20, 10]) while (rest >= v && chips.length < 7) { chips.push(v); rest -= v; }
+    if (rest > 0 || !chips.length) chips.push('x');
+    const grew = amt > spotShown; spotShown = amt;
+    spot.innerHTML = `<div class="chipstack">${chips.map((v, i) =>
+      `<i class="sc c${v}${grew && i === chips.length - 1 ? ' drop' : ''}" style="--i:${i}"></i>`).join('')}</div><span class="spot-amt">${fmt(amt)}</span>`;
+  }
   function bjRender() {
     $('bjBal').textContent = fmt(state.balance);
     // Dealer
@@ -1166,19 +1197,20 @@ body{height:100%}
     const vis = bj.hole ? bj.dealer.slice(0, 1) : bj.dealer;
     $('bjDealerTotal').innerHTML = totalHTML(vis, bj.hole);
     // Spieler
-    const showBet = bj.phase === 'bet' ? state.bjBet : null;
     $('bjHands').innerHTML = bj.hands.length ? bj.hands.map((h, i) => `
       <div class="hand${bj.hands.length > 1 && i === bj.active && bj.phase === 'play' ? ' active' : ''}">
+        <div class="hand-info">${totalHTML(h.cards, h.split)}${h.res ? `<span class="hand-res ${h.res[0]}">${h.res[1]}</span>` : ''}</div>
         <div class="cards">${h.cards.map(c => cardHTML(c)).join('')}</div>
-        <div class="hand-info">${totalHTML(h.cards, h.split)}<span class="hand-bet">${fmt(h.bet)}</span>${h.res ? `<span class="hand-res ${h.res[0]}">${h.res[1]}</span>` : ''}</div>
       </div>`).join('') : '<div class="hand empty-hand"><div class="cards"><div class="card ghost"></div><div class="card ghost"></div></div></div>';
     // Steuerung
     const betting = bj.phase === 'bet' || bj.phase === 'done';
     $('bjBetBar').hidden = !betting;
     $('bjActBar').hidden = betting;
-    $('bjStake').textContent = state.bjBet ? fmt(state.bjBet) : '';
-    $('bjDeal').disabled = !state.bjBet || busy;
-    $('bjClear').disabled = !state.bjBet;
+    const next = state.bjBet || state.bjRepeat;
+    renderSpot(betting ? next : bj.hands.reduce((a, h) => a + h.bet, 0));
+    $('bjStake').textContent = next ? fmt(next) : '';
+    $('bjDeal').disabled = !next || busy;
+    $('bjClear').disabled = !next;
     $('bjHit').disabled = $('bjStand').disabled = bj.phase !== 'play';
     $('bjSplit').disabled = !canSplit();
     $('bjExit').disabled = !betting;
