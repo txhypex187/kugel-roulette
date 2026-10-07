@@ -253,6 +253,42 @@ body{height:100%}
 .bj-actions button:disabled{opacity:.3;cursor:not-allowed}
 .game-icon svg rect{fill:var(--felt);stroke:var(--accent)} .game-icon svg rect.front{fill:#FBFAF6}
 
+/* Mines */
+.mn-in{grid-template-rows:auto 80px auto minmax(0,1fr) auto}
+.mn-info{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.mn-info b{display:block;font-family:var(--display);font-weight:600;font-size:20px}
+.mn-info .r{text-align:right}
+.mn-k{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mn-msg{font-family:var(--display);font-weight:600;font-size:22px;text-align:center;min-width:60px}
+.mn-msg.win{color:var(--win);animation:pop2 .5s cubic-bezier(.2,1.7,.4,1)} .mn-msg.lose{color:var(--lose)}
+.mn-area{min-height:0;container-type:size;display:grid;place-items:center}
+.mn-board{width:min(100cqw, 100cqh);height:min(100cqw, 100cqh);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:min(1.6cqw, 1.6cqh, 8px);padding:min(2cqw, 2cqh, 10px);border-radius:20px;background:var(--felt);
+  box-shadow:inset 0 0 0 1px var(--felt-line),inset 0 0 50px rgba(0,0,0,.25)}
+.tile{border:0;border-radius:min(2.4cqw, 2.4cqh, 12px);background:#2A6B52;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);display:grid;place-items:center;padding:0;transition:transform .1s, background .15s;min-width:0;min-height:0}
+.tile:not(:disabled):hover{background:#327A5E}
+.tile:not(:disabled):active{transform:scale(.93)}
+.tile:disabled{cursor:default}
+.tile.idle{opacity:.55}
+.tile svg{width:62%;height:62%}
+.tile.gem{background:#0F2E22;box-shadow:inset 0 0 0 2px #3DD07F;animation:reveal .3s cubic-bezier(.2,1.6,.4,1)}
+.tile.mine{background:#5A1A16;box-shadow:inset 0 0 0 2px #F0675B;animation:reveal .3s cubic-bezier(.2,1.6,.4,1)}
+.tile.boom{background:#C0392F;animation:boom .45s}
+.tile.ghost{opacity:.4;animation:none;box-shadow:none}
+@keyframes reveal{from{transform:scale(.6)}to{transform:none}}
+@keyframes boom{0%{transform:scale(1.25)}40%{transform:scale(.9) rotate(-4deg)}70%{transform:rotate(3deg)}100%{transform:none}}
+.mn-slider{display:grid;grid-template-columns:auto 1fr 28px;align-items:center;gap:10px}
+.mn-slider input{width:100%;accent-color:var(--accent)}
+.mn-slider b{font-family:var(--display);font-weight:600;font-size:18px;text-align:right;font-variant-numeric:tabular-nums}
+.mn-slider:has(input:disabled){opacity:.45}
+.mn-cash{padding-block:16px;font-size:17px}
+.mn .bj-ctrl{display:grid}
+.mn .bj-ctrl>div{grid-area:1/1}
+.mn .bj-ctrl>.off{visibility:hidden}
+#mnPlayBar{align-content:center;gap:12px}
+.mn-play-info{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--muted);padding-inline:4px}
+.mn-play-info b{color:var(--fg)}
+.game-icon svg .gem{fill:#3DD07F22}
+
 /* Eingabe-Sheet */
 .sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
 @keyframes fade{from{opacity:0}}
@@ -347,7 +383,10 @@ body{height:100%}
         <span class="game-icon"><svg viewBox="0 0 48 48"><rect x="8" y="10" width="20" height="28" rx="3" transform="rotate(-10 18 24)"/><rect x="20" y="10" width="20" height="28" rx="3" transform="rotate(8 30 24)" class="front"/></svg></span>
         <span class="game-name">Blackjack</span><span class="game-sub">Zahlt 3:2</span>
       </button>
-      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 3</span><span class="game-sub">Bald verfügbar</span></div>
+      <button class="game live" id="playMines">
+        <span class="game-icon"><svg viewBox="0 0 48 48"><path class="gem" d="M14 10h20l8 10-18 20L6 20z"/><path d="M6 20h36M18 10l-4 10 10 20 10-20-4-10"/></svg></span>
+        <span class="game-name">Mines</span><span class="game-sub">5×5 Feld</span>
+      </button>
       <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 4</span><span class="game-sub">Bald verfügbar</span></div>
     </div>
   </div>
@@ -395,6 +434,43 @@ body{height:100%}
   </div>
 </div>
 
+<div class="bj mn" id="mn" hidden>
+  <div class="bj-in mn-in">
+    <header class="top bj-top">
+      <button class="icon-btn" id="mnExit" aria-label="Zum Menü" title="Zum Menü"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="brand">Mines</div>
+      <button class="bal" id="mnBalBtn" aria-label="Guthaben ändern">
+        <div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
+        <div class="bal-val" id="mnBal">100</div>
+      </button>
+    </header>
+    <div class="graph bj-graph" aria-label="Gewinn und Verlust">
+      <div class="graph-head"><span class="graph-label">Gewinn / Verlust</span><span class="graph-val" id="mnProfit">0</span></div>
+      <div class="chart-box"><canvas id="mnChart" aria-hidden="true"></canvas></div>
+    </div>
+    <div class="mn-info">
+      <div><span class="mn-k">Multiplikator</span><b id="mnMult">1,00×</b></div>
+      <div class="mn-msg" id="mnMsg" aria-live="polite"></div>
+      <div class="r"><span class="mn-k">Nächstes Feld</span><b id="mnNext">–</b></div>
+    </div>
+    <div class="mn-area"><div class="mn-board" id="mnBoard" role="grid" aria-label="Minenfeld"></div></div>
+    <section class="controls bj-ctrl" aria-label="Aktionen">
+      <div id="mnBetBar" class="bj-bar">
+        <label class="mn-slider"><span class="mn-k">Minen</span><input type="range" id="mnRange" min="1" max="24" step="1" value="3"><b id="mnCount">3</b></label>
+        <div class="chips" id="mnChips"></div>
+        <div class="actbar">
+          <button class="tool" id="mnClear" aria-label="Einsatz leeren" title="Einsatz leeren"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+          <button class="spin" id="mnStart">Start <span class="amt" id="mnStake"></span></button>
+        </div>
+      </div>
+      <div id="mnPlayBar" class="bj-bar off">
+        <div class="mn-play-info"><span>Minen <b id="mnPMines">3</b></span><span>Einsatz <b id="mnPBet">0</b></span><span>Diamanten <b id="mnPGems">0</b></span></div>
+        <button class="spin mn-cash" id="mnCash">Auscashen <span class="amt" id="mnCashAmt"></span></button>
+      </div>
+    </section>
+  </div>
+</div>
+
 <div class="sheet-bg" id="sheetBg" hidden>
   <form class="sheet" id="sheet" autocomplete="off">
     <h2 id="sheetTitle">Guthaben</h2>
@@ -422,7 +498,9 @@ body{height:100%}
   const lab = n => n === 37 ? '00' : String(n);
   const colorOf = n => isZero(n) ? 'zero' : REDS.has(n) ? 'red' : 'black';
   const colorName = n => isZero(n) ? 'Grün' : REDS.has(n) ? 'Rot' : 'Schwarz';
-  const fmt = n => Math.round(n).toLocaleString('de-DE');
+  const fmt = n => (Math.round(n * 100) / 100).toLocaleString('de-DE', {maximumFractionDigits: 2});
+  const cents = n => Math.round(n * 100) / 100;
+  const onTable = () => total(state.bets) + (state.bjBet || 0) + (state.mnBet || 0);
   const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
   const short = n => n >= 1e6 ? (n / 1e6).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'M'
                    : n >= 1000 ? (n / 1000).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'k' : String(n);
@@ -516,7 +594,7 @@ body{height:100%}
     $('sheetTitle').textContent = title;
     $('sheetHint').textContent = hint;
     const inp = $('sheetInput');
-    inp.value = value ? fmt(value) : '';
+    inp.value = value ? fmt(Math.floor(value)) : '';
     $('sheetQuick').innerHTML = '';
     quick.forEach(q => {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(q);
@@ -548,7 +626,7 @@ body{height:100%}
       title: 'Guthaben festlegen',
       hint: 'So viel Spielgeld hast du danach frei. Gewinn und Verlust im Graphen bleiben unverändert.',
       value: state.balance, quick: [100, 1000, 10000, 100000],
-      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + total(state.bets) + (state.bjBet || 0)); bjRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
+      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
     });
   };
   function openCustom() {
@@ -670,6 +748,7 @@ body{height:100%}
     const lp = $('lobbyProfit');
     lp.textContent = el.textContent; lp.className = el.className;
     $('bjProfit').textContent = el.textContent; $('bjProfit').className = el.className;
+    $('mnProfit').textContent = el.textContent; $('mnProfit').className = el.className;
     $('lRounds').textContent = $('sRounds').textContent;
     $('lRecord').textContent = $('sRecord').textContent;
     $('lWagered').textContent = $('sWagered').textContent;
@@ -704,7 +783,7 @@ body{height:100%}
 
   // ---------- Graph ----------
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); }
+  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); }
   function drawChartOn(chart) {
     const cctx = chart.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -742,6 +821,7 @@ body{height:100%}
   new ResizeObserver(() => drawChartOn($('chart'))).observe($('chart'));
   new ResizeObserver(() => drawChartOn($('lobbyChart'))).observe($('lobbyChart'));
   new ResizeObserver(() => drawChartOn($('bjChart'))).observe($('bjChart'));
+  new ResizeObserver(() => drawChartOn($('mnChart'))).observe($('mnChart'));
 
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
@@ -935,7 +1015,7 @@ body{height:100%}
     const kept = t <= state.balance;
     if (kept) { state.bets = {...bets}; state.balance -= t; for (const [k, v] of Object.entries(bets)) undo.push({key: k, a: v}); }
     // Rekord: höchster Geldstand nach einer Runde (Guthaben plus liegende Einsätze)
-    state.record = Math.max(state.record || 0, state.balance + total(state.bets) + (state.bjBet || 0));
+    state.record = Math.max(state.record || 0, state.balance + onTable());
     spinning = false;
     save();
     setHub(n, true);
@@ -1163,7 +1243,7 @@ body{height:100%}
     state.graph.push((state.graph[state.graph.length - 1] || 0) + net);
     if (state.graph.length > 500) state.graph = state.graph.slice(-500);
     state.bjRepeat = bj.lastBet <= state.balance ? bj.lastBet : 0;   // Einsatz bleibt liegen
-    state.record = Math.max(state.record || 0, state.balance + total(state.bets) + state.bjBet);
+    state.record = Math.max(state.record || 0, state.balance + onTable());
     bj.phase = 'done'; busy = false;
     save(); render(); renderStats(); drawChart();
     if (net > 0) { bjSay('+' + fmt(net), 'win'); sfx.win(net / staked); buzz([25, 30, 40]); }
@@ -1226,21 +1306,172 @@ body{height:100%}
   }
   $('bjBalBtn').onclick = () => { if (bj.phase === 'bet' || bj.phase === 'done') $('balBtn').onclick(); };
 
+  // ---------- Mines ----------
+  // 5×5 Feld, 1–24 Minen. Multiplikator = 0,99 × faire Quote (1 % Hausvorteil wie bei Stake)
+  if (typeof state.mnBet !== 'number') state.mnBet = 0;
+  if (typeof state.mnRepeat !== 'number') state.mnRepeat = 0;
+  if (!(state.mnMines >= 1 && state.mnMines <= 24)) state.mnMines = 3;
+  if (state.mnPending) { state.balance = cents(state.balance + state.mnPending); state.mnPending = 0; save(); }  // abgebrochene Runde zurückbuchen
+  let mn = {phase: 'bet', mines: new Set(), open: new Set(), bet: 0, boom: -1};
+  const GEM = '<svg viewBox="0 0 24 24"><path d="M7 4h10l4 5-9 11L3 9z" fill="#3DD07F"/><path d="M3 9h18M9.5 4L8 9l4 11 4-11-1.5-5" fill="none" stroke="#0F2E22" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+  const BOMB = '<svg viewBox="0 0 24 24"><circle cx="11" cy="14" r="7" fill="#1A1A1A"/><circle cx="8.5" cy="11.5" r="1.8" fill="#fff" opacity=".45"/><path d="M15 8l2.5-2.5" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round"/><path d="M18.5 3.5l1-1M20 6h1.5M17.5 2v-.5" stroke="#F3B44A" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  function mnMult(m, k) {
+    let x = 0.99;
+    for (let i = 0; i < k; i++) x *= (25 - i) / (25 - m - i);
+    return k ? x : 1;
+  }
+  const fmtX = x => x.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '×';
+
+  const board = $('mnBoard');
+  for (let i = 0; i < 25; i++) {
+    const t = document.createElement('button');
+    t.className = 'tile'; t.dataset.i = i; t.setAttribute('aria-label', 'Feld ' + (i + 1));
+    t.onclick = () => mnPick(i);
+    board.appendChild(t);
+  }
+  const mnChips = $('mnChips');
+  CHIPS.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.v = v;
+    b.onclick = () => mnAddChip(v);
+    mnChips.appendChild(b);
+  });
+  const mnRange = $('mnRange');
+  mnRange.value = state.mnMines;
+  mnRange.oninput = () => { state.mnMines = Number(mnRange.value); save(); mnRender(); };
+
+  function mnPlaceRepeat() {
+    if (state.mnRepeat <= state.balance) { state.balance = cents(state.balance - state.mnRepeat); state.mnBet = state.mnRepeat; }
+    state.mnRepeat = 0;
+  }
+  function mnAddChip(v) {
+    if (mn.phase === 'play') return;
+    ensureAudio();
+    if (v === 'custom' && !state.custom) { openCustom(); setTimeout(mnRender, 0); return; }
+    if (!state.mnBet && state.mnRepeat) mnPlaceRepeat();
+    let a = v === 'all' ? state.balance : v === 'custom' ? state.custom : Number(v);
+    a = Math.min(a, state.balance);
+    if (a <= 0) { mnSay('Kein Guthaben frei'); return; }
+    state.balance = cents(state.balance - a); state.mnBet = cents(state.mnBet + a);
+    sfx.chip(); buzz(8); save(); mnRender(); render();
+  }
+  $('mnClear').onclick = () => {
+    if (mn.phase === 'play') return;
+    state.balance = cents(state.balance + state.mnBet); state.mnBet = 0; state.mnRepeat = 0; save(); mnRender(); render();
+  };
+  function mnSay(t, kind) { const m = $('mnMsg'); m.textContent = t; m.className = 'mn-msg' + (kind ? ' ' + kind : ''); }
+
+  $('mnStart').onclick = () => {
+    if (mn.phase === 'play') return;
+    if (!state.mnBet && state.mnRepeat > state.balance) { mnSay('Zu wenig'); return; }
+    if (!state.mnBet && state.mnRepeat) mnPlaceRepeat();
+    if (!state.mnBet) return;
+    ensureAudio();
+    const bet = state.mnBet;
+    state.mnBet = 0; state.mnPending = bet; save();
+    const idx = [...Array(25).keys()];
+    for (let i = 24; i > 0; i--) { const j = randInt(i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    mn = {phase: 'play', mines: new Set(idx.slice(0, state.mnMines)), open: new Set(), bet, m: state.mnMines, boom: -1};
+    board.querySelectorAll('.tile').forEach(t => { t.className = 'tile'; t.innerHTML = ''; });
+    mnSay(''); sfx.launch(); mnRender();
+  };
+
+  function mnPick(i) {
+    if (mn.phase !== 'play' || mn.open.has(i)) return;
+    const t = board.children[i];
+    if (mn.mines.has(i)) {
+      mn.boom = i;
+      t.className = 'tile mine boom'; t.innerHTML = BOMB;
+      noise(.5, 160, 1.2, .8); sfx.lose(); buzz([60, 40, 80]);
+      mnEnd(0);
+      return;
+    }
+    mn.open.add(i);
+    t.className = 'tile gem'; t.innerHTML = GEM;
+    const k = mn.open.size;
+    tone(520 + k * 45, 0, .18, .09, 'triangle'); tone(1040 + k * 90, .05, .2, .04, 'sine'); buzz(10);
+    if (k === 25 - mn.m) { mnEnd(cents(mn.bet * mnMult(mn.m, k))); return; }
+    mnRender();
+  }
+  $('mnCash').onclick = () => {
+    if (mn.phase !== 'play' || !mn.open.size) return;
+    mnEnd(cents(mn.bet * mnMult(mn.m, mn.open.size)));
+  };
+
+  function mnEnd(ret) {
+    const staked = mn.bet, net = cents(ret - staked);
+    state.balance = cents(state.balance + ret); state.mnPending = 0;
+    state.rounds += 1; state.wagered += staked; if (net > 0) state.wins += 1;
+    state.graph.push(cents((state.graph[state.graph.length - 1] || 0) + net));
+    if (state.graph.length > 500) state.graph = state.graph.slice(-500);
+    state.mnRepeat = staked <= state.balance ? staked : 0;   // Einsatz bleibt liegen
+    state.record = Math.max(state.record || 0, state.balance + onTable());
+    mn.phase = 'done';
+    // restliche Felder aufdecken
+    [...board.children].forEach((t, i) => {
+      if (mn.open.has(i) || i === mn.boom) return;
+      t.className = 'tile ghost ' + (mn.mines.has(i) ? 'mine' : 'gem');
+      t.innerHTML = mn.mines.has(i) ? BOMB : GEM;
+    });
+    save(); render(); renderStats(); drawChart();
+    if (ret > 0) { mnSay('+' + fmt(net), 'win'); sfx.win(ret / staked); buzz([25, 30, 40]); }
+    else mnSay('−' + fmt(staked), 'lose');
+    mnRender();
+  }
+
+  function mnRender() {
+    $('mnBal').textContent = fmt(state.balance);
+    const playing = mn.phase === 'play';
+    const m = playing ? mn.m : state.mnMines;
+    const k = playing ? mn.open.size : 0;
+    $('mnCount').textContent = state.mnMines;
+    mnRange.disabled = playing;
+    $('mnMult').textContent = fmtX(playing ? mnMult(m, k) : 1);
+    $('mnNext').textContent = k < 25 - m ? fmtX(mnMult(m, k + 1)) : '–';
+    $('mnBetBar').classList.toggle('off', playing);
+    $('mnPlayBar').classList.toggle('off', !playing);
+    const next = state.mnBet || state.mnRepeat;
+    $('mnStake').textContent = next ? fmt(next) : '';
+    $('mnStart').disabled = !next;
+    $('mnClear').disabled = !next;
+    $('mnCash').disabled = !k;
+    $('mnCashAmt').textContent = k ? fmt(cents(mn.bet * mnMult(m, k))) : fmt(mn.bet);
+    $('mnExit').disabled = playing;
+    $('mnPMines').textContent = m; $('mnPBet').textContent = fmt(mn.bet); $('mnPGems').textContent = k + ' / ' + (25 - m);
+    [...board.children].forEach((t, i) => {
+      t.disabled = !playing || mn.open.has(i);
+      t.classList.toggle('idle', !playing && !t.innerHTML);
+    });
+    mnChips.querySelectorAll('.chip').forEach(c => {
+      const v = c.dataset.v;
+      if (v === 'custom') c.innerHTML = state.custom ? `<span>${short(state.custom)}<small>eigener</small></span>` : '<span>+<small>eigener</small></span>';
+      else if (v === 'all') c.innerHTML = '<span>ALL<small>in</small></span>';
+      else c.innerHTML = `<span>${v}</span>`;
+      c.disabled = playing;
+    });
+  }
+  $('mnBalBtn').onclick = () => { if (mn.phase !== 'play') $('balBtn').onclick(); };
+  mnRender();
+
   // ---------- Menü ----------
   function showView(v) {
     $('lobby').hidden = v !== 'lobby';
     $('bj').hidden = v !== 'blackjack';
-    $('lobbyBal').textContent = fmt(state.balance + total(state.bets) + state.bjBet);
+    $('mn').hidden = v !== 'mines';
+    $('lobbyBal').textContent = fmt(state.balance + onTable());
     state.view = v; save();
     if (v === 'lobby') { renderStats(); requestAnimationFrame(() => drawChartOn($('lobbyChart'))); }
     if (v === 'roulette') requestAnimationFrame(() => { resize(); drawChart(); });
     if (v === 'blackjack') { bjRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('bjChart'))); }
+    if (v === 'mines') { mnRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('mnChart'))); }
   }
   $('exitBtn').onclick = () => { if (!spinning) showView('lobby'); };
   $('bjExit').onclick = () => { if (bj.phase === 'bet' || bj.phase === 'done') showView('lobby'); };
   $('playRoulette').onclick = () => showView('roulette');
   $('playBlackjack').onclick = () => showView('blackjack');
-  if (state.view === 'lobby' || state.view === 'blackjack') showView(state.view);
+  $('playMines').onclick = () => showView('mines');
+  $('mnExit').onclick = () => { if (mn.phase !== 'play') showView('lobby'); };
+  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines') showView(state.view);
 
   renderSound();
   render();
