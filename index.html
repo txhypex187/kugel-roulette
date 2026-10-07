@@ -289,6 +289,41 @@ body{height:100%}
 .mn-play-info b{color:var(--fg)}
 .game-icon svg .gem{fill:#3DD07F22}
 
+/* Dice */
+.dc-in{grid-template-rows:auto 80px minmax(0,1fr) auto}
+.dc-stage{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto auto;gap:10px;background:var(--felt);color:var(--felt-ink);border-radius:22px;padding:12px 14px 14px;
+  box-shadow:inset 0 0 0 1px var(--felt-line),inset 0 0 60px rgba(0,0,0,.25);overflow:hidden}
+.dc-hist{display:flex;gap:5px;justify-content:flex-end;min-height:24px;overflow:hidden}
+.dc-hist span{font-size:11.5px;font-weight:800;padding:4px 7px;border-radius:8px;font-variant-numeric:tabular-nums;background:rgba(0,0,0,.3);color:#F3B4AD;flex:none}
+.dc-hist span.w{background:#3DD07F;color:#0F2E22}
+.dc-hist span:first-child{animation:pop2 .35s cubic-bezier(.2,1.7,.4,1)}
+.dc-roll{align-self:center;text-align:center;font-family:var(--display);font-weight:600;font-size:clamp(48px, 11dvh, 84px);line-height:1;font-variant-numeric:tabular-nums;transition:color .2s}
+.dc-roll.w{color:#3DD07F;text-shadow:0 0 24px rgba(61,208,127,.45)} .dc-roll.l{color:#F0675B}
+.dc-msg{text-align:center;font-weight:800;font-size:15px;min-height:20px;font-variant-numeric:tabular-nums}
+.dc-msg.w{color:#3DD07F} .dc-msg.l{color:#F3B4AD}
+.dc-track-wrap{position:relative;padding-top:30px}
+.dc-track{position:relative;height:12px;border-radius:999px;background:linear-gradient(90deg,var(--lc) 0 var(--p),var(--rc) var(--p) 100%)}
+.dc-track-wrap input{position:absolute;left:-2px;right:-2px;top:22px;width:calc(100% + 4px);height:28px;margin:0;background:transparent;-webkit-appearance:none;appearance:none}
+.dc-track-wrap input::-webkit-slider-runnable-track{height:28px;background:transparent}
+.dc-track-wrap input::-moz-range-track{height:28px;background:transparent}
+.dc-track-wrap input::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:9px;background:#FBFAF6;box-shadow:0 2px 6px rgba(0,0,0,.4);border:0}
+.dc-track-wrap input::-moz-range-thumb{width:28px;height:28px;border-radius:9px;background:#FBFAF6;box-shadow:0 2px 6px rgba(0,0,0,.4);border:0}
+.dc-track-wrap input:disabled{opacity:.9}
+.dc-marker{position:absolute;bottom:18px;left:var(--x);transform:translateX(-50%);transition:left .45s cubic-bezier(.2,.9,.3,1);pointer-events:none}
+.dc-marker span{display:block;font-size:12px;font-weight:800;padding:4px 7px;border-radius:8px;background:#FBFAF6;color:#1A1408;font-variant-numeric:tabular-nums;position:relative}
+.dc-marker span::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:#FBFAF6}
+.dc-marker.w span{background:#3DD07F;color:#0F2E22} .dc-marker.w span::after{border-top-color:#3DD07F}
+.dc-marker.l span{background:#F0675B;color:#fff} .dc-marker.l span::after{border-top-color:#F0675B}
+.dc-scale{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;opacity:.6;margin-top:12px;font-variant-numeric:tabular-nums}
+.dc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.dc-stats>*{background:rgba(0,0,0,.22);border-radius:12px;padding:8px 10px;text-align:left;border:0;color:inherit;min-width:0}
+.dc-stats .mn-k{color:var(--felt-ink);opacity:.65}
+.dc-stats b{display:flex;align-items:center;gap:4px;font-family:var(--display);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+.dc-dir{cursor:pointer;box-shadow:inset 0 0 0 1px var(--felt-line)}
+.dc-dir svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.7}
+.dc-dir:active{transform:scale(.97)}
+.game-icon svg .die{fill:var(--felt)} .game-icon svg .pip{fill:var(--accent);stroke:none}
+
 /* Eingabe-Sheet */
 .sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
 @keyframes fade{from{opacity:0}}
@@ -387,7 +422,10 @@ body{height:100%}
         <span class="game-icon"><svg viewBox="0 0 48 48"><path class="gem" d="M14 10h20l8 10-18 20L6 20z"/><path d="M6 20h36M18 10l-4 10 10 20 10-20-4-10"/></svg></span>
         <span class="game-name">Mines</span><span class="game-sub">5×5 Feld</span>
       </button>
-      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 4</span><span class="game-sub">Bald verfügbar</span></div>
+      <button class="game live" id="playDice">
+        <span class="game-icon"><svg viewBox="0 0 48 48"><rect class="die" x="9" y="9" width="30" height="30" rx="7"/><circle class="pip" cx="17" cy="17" r="2.6"/><circle class="pip" cx="24" cy="24" r="2.6"/><circle class="pip" cx="31" cy="31" r="2.6"/></svg></span>
+        <span class="game-name">Dice</span><span class="game-sub">Über oder unter</span>
+      </button>
     </div>
   </div>
 </div>
@@ -471,6 +509,47 @@ body{height:100%}
   </div>
 </div>
 
+<div class="bj dc" id="dc" hidden>
+  <div class="bj-in dc-in">
+    <header class="top bj-top">
+      <button class="icon-btn" id="dcExit" aria-label="Zum Menü" title="Zum Menü"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="brand">Dice</div>
+      <button class="bal" id="dcBalBtn" aria-label="Guthaben ändern">
+        <div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
+        <div class="bal-val" id="dcBal">100</div>
+      </button>
+    </header>
+    <div class="graph bj-graph" aria-label="Gewinn und Verlust">
+      <div class="graph-head"><span class="graph-label">Gewinn / Verlust</span><span class="graph-val" id="dcProfit">0</span></div>
+      <div class="chart-box"><canvas id="dcChart" aria-hidden="true"></canvas></div>
+    </div>
+    <section class="dc-stage" aria-label="Würfel">
+      <div class="dc-hist" id="dcHist"></div>
+      <div class="dc-roll" id="dcRoll" aria-live="polite">–</div>
+      <div class="dc-msg" id="dcMsg"></div>
+      <div class="dc-track-wrap">
+        <div class="dc-track" id="dcTrack"><div class="dc-marker" id="dcMarker" hidden><span id="dcMarkerVal"></span></div></div>
+        <input type="range" id="dcRange" min="2" max="98" step="1" value="50" aria-label="Zielzahl">
+        <div class="dc-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+      </div>
+      <div class="dc-stats">
+        <div><span class="mn-k">Multiplikator</span><b id="dcMult">1,98×</b></div>
+        <button class="dc-dir" id="dcDir"><span class="mn-k" id="dcDirLabel">Über</span><b><span id="dcTarget">50</span> <svg viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg></b></button>
+        <div><span class="mn-k">Gewinnchance</span><b id="dcChance">50%</b></div>
+      </div>
+    </section>
+    <section class="controls bj-ctrl" aria-label="Aktionen">
+      <div class="bj-bar">
+        <div class="chips" id="dcChips"></div>
+        <div class="actbar">
+          <button class="tool" id="dcClear" aria-label="Einsatz leeren" title="Einsatz leeren"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+          <button class="spin" id="dcGo">Würfeln <span class="amt" id="dcStake"></span></button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
 <div class="sheet-bg" id="sheetBg" hidden>
   <form class="sheet" id="sheet" autocomplete="off">
     <h2 id="sheetTitle">Guthaben</h2>
@@ -498,7 +577,7 @@ body{height:100%}
   const lab = n => n === 37 ? '00' : String(n);
   const colorOf = n => isZero(n) ? 'zero' : REDS.has(n) ? 'red' : 'black';
   const colorName = n => isZero(n) ? 'Grün' : REDS.has(n) ? 'Rot' : 'Schwarz';
-  const fmt = n => (Math.round(n * 100) / 100).toLocaleString('de-DE', {maximumFractionDigits: 2});
+  const fmt = n => { const c = Math.round(n * 100) / 100, f = c % 1 ? 2 : 0; return c.toLocaleString('de-DE', {minimumFractionDigits: f, maximumFractionDigits: f}); };
   const cents = n => Math.round(n * 100) / 100;
   const onTable = () => total(state.bets) + (state.bjBet || 0) + (state.mnBet || 0);
   const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
@@ -626,7 +705,7 @@ body{height:100%}
       title: 'Guthaben festlegen',
       hint: 'So viel Spielgeld hast du danach frei. Gewinn und Verlust im Graphen bleiben unverändert.',
       value: state.balance, quick: [100, 1000, 10000, 100000],
-      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
+      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); dcRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
     });
   };
   function openCustom() {
@@ -749,6 +828,7 @@ body{height:100%}
     lp.textContent = el.textContent; lp.className = el.className;
     $('bjProfit').textContent = el.textContent; $('bjProfit').className = el.className;
     $('mnProfit').textContent = el.textContent; $('mnProfit').className = el.className;
+    $('dcProfit').textContent = el.textContent; $('dcProfit').className = el.className;
     $('lRounds').textContent = $('sRounds').textContent;
     $('lRecord').textContent = $('sRecord').textContent;
     $('lWagered').textContent = $('sWagered').textContent;
@@ -783,7 +863,7 @@ body{height:100%}
 
   // ---------- Graph ----------
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); }
+  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); drawChartOn($('dcChart')); }
   function drawChartOn(chart) {
     const cctx = chart.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -822,6 +902,7 @@ body{height:100%}
   new ResizeObserver(() => drawChartOn($('lobbyChart'))).observe($('lobbyChart'));
   new ResizeObserver(() => drawChartOn($('bjChart'))).observe($('bjChart'));
   new ResizeObserver(() => drawChartOn($('mnChart'))).observe($('mnChart'));
+  new ResizeObserver(() => drawChartOn($('dcChart'))).observe($('dcChart'));
 
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
@@ -1453,25 +1534,131 @@ body{height:100%}
   $('mnBalBtn').onclick = () => { if (mn.phase !== 'play') $('balBtn').onclick(); };
   mnRender();
 
+  // ---------- Dice ----------
+  // Zahl 0,00–100,00. Multiplikator = 99 / Gewinnchance (1 % Hausvorteil wie bei Stake). Einsatz bleibt stehen.
+  if (typeof state.dcBet !== 'number') state.dcBet = 0;
+  if (!(state.dcTarget >= 2 && state.dcTarget <= 98)) state.dcTarget = 50;
+  if (typeof state.dcOver !== 'boolean') state.dcOver = true;
+  if (!Array.isArray(state.dcHist)) state.dcHist = [];
+  let dcRolling = false;
+  const dcChanceOf = () => state.dcOver ? 100 - state.dcTarget : state.dcTarget;
+  const dcMultOf = () => 99 / dcChanceOf();
+  const fmt2 = x => x.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const dcChips = $('dcChips');
+  CHIPS.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.v = v;
+    b.onclick = () => dcAddChip(v);
+    dcChips.appendChild(b);
+  });
+  const dcRange = $('dcRange');
+  dcRange.value = state.dcTarget;
+  dcRange.oninput = () => { state.dcTarget = Number(dcRange.value); save(); dcRender(); };
+  $('dcDir').onclick = () => { if (dcRolling) return; state.dcOver = !state.dcOver; state.dcTarget = 100 - state.dcTarget; dcRange.value = state.dcTarget; save(); sfx.chip(); dcRender(); };
+  function dcAddChip(v) {
+    if (dcRolling) return;
+    ensureAudio();
+    if (v === 'custom' && !state.custom) { openCustom(); setTimeout(dcRender, 0); return; }
+    const a = v === 'all' ? state.balance : v === 'custom' ? state.custom : Number(v);
+    const nb = v === 'all' ? state.balance : Math.min(cents(state.dcBet + a), state.balance);
+    if (nb <= 0) return;
+    state.dcBet = nb;
+    sfx.chip(); buzz(8); save(); dcRender();
+  }
+  $('dcClear').onclick = () => { if (dcRolling) return; state.dcBet = 0; save(); dcRender(); };
+
+  $('dcGo').onclick = async () => {
+    if (dcRolling || !state.dcBet) return;
+    const bet = state.dcBet;
+    if (bet > state.balance) { const m = $('dcMsg'); m.textContent = 'Zu wenig Guthaben'; m.className = 'dc-msg l'; return; }
+    ensureAudio(); dcRolling = true;
+    const over = state.dcOver, target = state.dcTarget, mult = dcMultOf();
+    state.balance = cents(state.balance - bet); dcRender();
+    const roll = randInt(10001) / 100;
+    const win = over ? roll > target : roll < target;
+    // kurze Zähl-Animation
+    const el = $('dcRoll'), mk = $('dcMarker');
+    el.className = 'dc-roll'; $('dcMsg').textContent = '';
+    mk.hidden = false; mk.className = 'dc-marker'; mk.style.setProperty('--x', roll + '%');
+    const t0 = performance.now(), d = reduced ? 1 : 450;
+    let lastTick = 0;
+    await new Promise(res => {
+      const step = now => {
+        const k = Math.min(1, (now - t0) / d);
+        const shown = k < 1 ? randInt(10001) / 100 : roll;
+        el.textContent = fmt2(shown); $('dcMarkerVal').textContent = fmt2(shown);
+        if (now - lastTick > 45 && k < 1) { sfx.tick(.6); lastTick = now; }
+        k < 1 ? requestAnimationFrame(step) : res();
+      };
+      requestAnimationFrame(step);
+    });
+    const ret = win ? cents(bet * mult) : 0, net = cents(ret - bet);
+    state.balance = cents(state.balance + ret);
+    state.rounds += 1; state.wagered += bet; if (win) state.wins += 1;
+    state.graph.push(cents((state.graph[state.graph.length - 1] || 0) + net));
+    if (state.graph.length > 500) state.graph = state.graph.slice(-500);
+    state.record = Math.max(state.record || 0, state.balance + onTable());
+    state.dcHist.unshift([roll, win]); state.dcHist = state.dcHist.slice(0, 8);
+    if (state.dcBet > state.balance) state.dcBet = state.balance > 0 ? state.balance : 0;
+    el.className = 'dc-roll ' + (win ? 'w' : 'l'); mk.className = 'dc-marker ' + (win ? 'w' : 'l');
+    const m = $('dcMsg');
+    m.textContent = win ? '+' + fmt(net) : '−' + fmt(bet); m.className = 'dc-msg ' + (win ? 'w' : 'l');
+    if (win) { sfx.win(mult); buzz([25, 30, 40]); } else { sfx.lose(); buzz(30); }
+    dcRolling = false;
+    save(); render(); renderStats(); drawChart(); dcRender();
+  };
+
+  function dcRender() {
+    $('dcBal').textContent = fmt(state.balance);
+    const chance = dcChanceOf();
+    $('dcMult').textContent = fmt2(dcMultOf()) + '×';
+    $('dcChance').textContent = chance + '%';
+    $('dcTarget').textContent = state.dcTarget;
+    $('dcDirLabel').textContent = state.dcOver ? 'Über' : 'Unter';
+    const tr = $('dcTrack');
+    tr.style.setProperty('--p', state.dcTarget + '%');
+    tr.style.setProperty('--lc', state.dcOver ? '#F0675B' : '#3DD07F');
+    tr.style.setProperty('--rc', state.dcOver ? '#3DD07F' : '#F0675B');
+    dcRange.disabled = dcRolling;
+    $('dcStake').textContent = state.dcBet ? fmt(state.dcBet) : '';
+    $('dcGo').disabled = !state.dcBet || dcRolling;
+    $('dcClear').disabled = !state.dcBet || dcRolling;
+    $('dcExit').disabled = dcRolling;
+    $('dcHist').innerHTML = state.dcHist.map(([v, w]) => `<span class="${w ? 'w' : ''}">${fmt2(v)}</span>`).join('');
+    dcChips.querySelectorAll('.chip').forEach(c => {
+      const v = c.dataset.v;
+      if (v === 'custom') c.innerHTML = state.custom ? `<span>${short(state.custom)}<small>eigener</small></span>` : '<span>+<small>eigener</small></span>';
+      else if (v === 'all') c.innerHTML = '<span>ALL<small>in</small></span>';
+      else c.innerHTML = `<span>${v}</span>`;
+      c.disabled = dcRolling;
+    });
+  }
+  $('dcBalBtn').onclick = () => { if (!dcRolling) $('balBtn').onclick(); };
+  dcRender();
+
   // ---------- Menü ----------
   function showView(v) {
     $('lobby').hidden = v !== 'lobby';
     $('bj').hidden = v !== 'blackjack';
     $('mn').hidden = v !== 'mines';
+    $('dc').hidden = v !== 'dice';
     $('lobbyBal').textContent = fmt(state.balance + onTable());
     state.view = v; save();
     if (v === 'lobby') { renderStats(); requestAnimationFrame(() => drawChartOn($('lobbyChart'))); }
     if (v === 'roulette') requestAnimationFrame(() => { resize(); drawChart(); });
     if (v === 'blackjack') { bjRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('bjChart'))); }
     if (v === 'mines') { mnRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('mnChart'))); }
+    if (v === 'dice') { dcRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('dcChart'))); }
   }
   $('exitBtn').onclick = () => { if (!spinning) showView('lobby'); };
   $('bjExit').onclick = () => { if (bj.phase === 'bet' || bj.phase === 'done') showView('lobby'); };
   $('playRoulette').onclick = () => showView('roulette');
   $('playBlackjack').onclick = () => showView('blackjack');
   $('playMines').onclick = () => showView('mines');
+  $('playDice').onclick = () => showView('dice');
+  $('dcExit').onclick = () => { if (!dcRolling) showView('lobby'); };
   $('mnExit').onclick = () => { if (mn.phase !== 'play') showView('lobby'); };
-  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines') showView(state.view);
+  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines' || state.view === 'dice') showView(state.view);
 
   renderSound();
   render();
