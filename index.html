@@ -354,9 +354,6 @@ body{height:100%}
       <div class="bal-val" id="balance">100</div>
     </button>
     <button class="icon-btn" id="soundBtn" aria-label="Ton aus" title="Ton an/aus"></button>
-    <button class="icon-btn" id="resetBtn" aria-label="Verlauf zurücksetzen" title="Verlauf zurücksetzen">
-      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-    </button>
   </header>
 
   <section class="wheel-area" aria-label="Kessel">
@@ -757,21 +754,6 @@ body{height:100%}
     if (t > state.balance) { say('Zu wenig Guthaben zum Verdoppeln.', 'lose'); return; }
     for (const [k, v] of Object.entries(state.bets)) { state.bets[k] = v * 2; undo.push({key: k, a: v}); }
     state.balance -= t; sfx.chip(); save(); render();
-  };
-
-  let resetArmed = null;
-  $('resetBtn').onclick = () => {
-    if (spinning) return;
-    const b = $('resetBtn');
-    if (!resetArmed) {
-      b.classList.add('armed'); say('Nochmal tippen: Graph, Rekord und letzte Zahlen löschen.', 'lose');
-      resetArmed = setTimeout(() => { b.classList.remove('armed'); resetArmed = null; say('', 'info'); }, 3000);
-      return;
-    }
-    clearTimeout(resetArmed); resetArmed = null; b.classList.remove('armed');
-    Object.assign(state, {history: [], graph: [0], rounds: 0, wins: 0, wagered: 0, record: 0});
-    clearShown(); save(); render(); drawChart(); setHub(null);
-    say('Verlauf gelöscht. Dein Guthaben bleibt.', 'info');
   };
 
   $('soundBtn').onclick = () => { state.sound = !state.sound; save(); renderSound(); if (state.sound) { ensureAudio(); sfx.chip(); } };

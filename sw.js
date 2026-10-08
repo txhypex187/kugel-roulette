@@ -1,5 +1,5 @@
 // Offline-Cache: Seite immer zuerst frisch aus dem Netz, sonst aus dem Cache
-const CACHE = 'kugel-v7';
+const CACHE = 'kugel-v8';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
