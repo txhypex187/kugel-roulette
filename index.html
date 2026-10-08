@@ -183,15 +183,16 @@ body{height:100%}
 
 /* Menü */
 .lobby{position:fixed;inset:0;z-index:15;background:var(--bg);overflow:auto;padding:max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));animation:fade .18s}
-.lobby-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
+.lobby-in{max-width:560px;margin:0 auto;display:grid;gap:18px;height:100%;min-height:520px;grid-template-rows:auto auto minmax(0,1fr)}
 .lobby-head{display:flex;align-items:center;justify-content:space-between;padding-top:6px}
 .lobby .brand{font-size:28px}
 .lobby-graph{height:150px;flex:none;padding:12px 14px}
 .lobby-graph .graph-val{font-size:20px}
 .g-reset{margin-left:auto;border:0;background:none;color:var(--muted);font-size:10.5px;font-weight:700;padding:0;text-decoration:underline;text-underline-offset:2px}
 .g-reset.armed{color:var(--lose);text-decoration:none}
-.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.game{aspect-ratio:1;border-radius:22px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center;color:var(--fg)}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;min-height:0}
+@media (min-width:700px){.games{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}}
+.game{min-height:0;border-radius:22px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center;color:var(--fg)}
 .game.live{background:var(--felt);border-color:transparent;color:var(--felt-ink);transition:transform .12s}
 .game.live:active{transform:scale(.97)}
 .game.soon{border-style:dashed;color:var(--muted)}
@@ -326,6 +327,21 @@ body{height:100%}
 .dc-dir:active{transform:scale(.97)}
 .game-icon svg .die{fill:var(--felt)} .game-icon svg .pip{fill:var(--accent);stroke:none}
 
+/* Plinko */
+.pl-in{grid-template-rows:auto 80px minmax(0,1fr) auto}
+.pl-stage{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px;background:var(--felt);color:var(--felt-ink);border-radius:22px;padding:10px 8px 8px;
+  box-shadow:inset 0 0 0 1px var(--felt-line),inset 0 0 60px rgba(0,0,0,.25);overflow:hidden}
+.pl-hist{justify-content:center}
+.pl-hist span{color:#1A1408}
+.pl-area{position:relative;min-height:0}
+.pl-area canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pl-opts{display:grid;grid-template-columns:1.6fr 1fr;gap:8px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:none;color:var(--muted);font-weight:800;font-size:13px;padding:7px 4px;border-radius:9px}
+.seg button[aria-checked="true"]{background:var(--fg);color:var(--bg)}
+.seg button:disabled{opacity:.4}
+.game-icon svg .pball{fill:#FBFAF6;stroke:none}
+
 /* Eingabe-Sheet */
 .sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
 @keyframes fade{from{opacity:0}}
@@ -425,6 +441,11 @@ body{height:100%}
         <span class="game-icon"><svg viewBox="0 0 48 48"><rect class="die" x="9" y="9" width="30" height="30" rx="7"/><circle class="pip" cx="17" cy="17" r="2.6"/><circle class="pip" cx="24" cy="24" r="2.6"/><circle class="pip" cx="31" cy="31" r="2.6"/></svg></span>
         <span class="game-name">Dice</span><span class="game-sub">Über oder unter</span>
       </button>
+      <button class="game live" id="playPlinko">
+        <span class="game-icon"><svg viewBox="0 0 48 48"><circle class="pip" cx="24" cy="12" r="2.4"/><circle class="pip" cx="17" cy="21" r="2.4"/><circle class="pip" cx="31" cy="21" r="2.4"/><circle class="pip" cx="10" cy="30" r="2.4"/><circle class="pip" cx="24" cy="30" r="2.4"/><circle class="pip" cx="38" cy="30" r="2.4"/><circle class="pball" cx="21" cy="16" r="3.4"/><path d="M6 40h36"/></svg></span>
+        <span class="game-name">Plinko</span><span class="game-sub">Bis 1000×</span>
+      </button>
+      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 6</span><span class="game-sub">Bald verfügbar</span></div>
     </div>
   </div>
 </div>
@@ -549,6 +570,40 @@ body{height:100%}
   </div>
 </div>
 
+<div class="bj pl" id="pl" hidden>
+  <div class="bj-in pl-in">
+    <header class="top bj-top">
+      <button class="icon-btn" id="plExit" aria-label="Zum Menü" title="Zum Menü"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="brand">Plinko</div>
+      <button class="bal" id="plBalBtn" aria-label="Guthaben ändern">
+        <div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
+        <div class="bal-val" id="plBal">100</div>
+      </button>
+    </header>
+    <div class="graph bj-graph" aria-label="Gewinn und Verlust">
+      <div class="graph-head"><span class="graph-label">Gewinn / Verlust</span><span class="graph-val" id="plProfit">0</span></div>
+      <div class="chart-box"><canvas id="plChart" aria-hidden="true"></canvas></div>
+    </div>
+    <section class="pl-stage" aria-label="Plinko-Brett">
+      <div class="dc-hist pl-hist" id="plHist"></div>
+      <div class="pl-area"><canvas id="plCanvas" aria-hidden="true"></canvas></div>
+    </section>
+    <section class="controls bj-ctrl" aria-label="Aktionen">
+      <div class="bj-bar">
+        <div class="pl-opts">
+          <div class="seg" id="plRisk" role="radiogroup" aria-label="Risiko"><button data-v="low">Niedrig</button><button data-v="med">Mittel</button><button data-v="high">Hoch</button></div>
+          <div class="seg" id="plRows" role="radiogroup" aria-label="Reihen"><button data-v="8">8</button><button data-v="12">12</button><button data-v="16">16</button></div>
+        </div>
+        <div class="chips" id="plChips"></div>
+        <div class="actbar">
+          <button class="tool" id="plClear" aria-label="Einsatz leeren" title="Einsatz leeren"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+          <button class="spin" id="plGo">Kugel fallen lassen <span class="amt" id="plStake"></span></button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
 <div class="sheet-bg" id="sheetBg" hidden>
   <form class="sheet" id="sheet" autocomplete="off">
     <h2 id="sheetTitle">Guthaben</h2>
@@ -578,7 +633,7 @@ body{height:100%}
   const colorName = n => isZero(n) ? 'Grün' : REDS.has(n) ? 'Rot' : 'Schwarz';
   const fmt = n => { const c = Math.round(n * 100) / 100, f = c % 1 ? 2 : 0; return c.toLocaleString('de-DE', {minimumFractionDigits: f, maximumFractionDigits: f}); };
   const cents = n => Math.round(n * 100) / 100;
-  const onTable = () => total(state.bets) + (state.bjBet || 0) + (state.mnBet || 0);
+  const onTable = () => total(state.bets) + (state.bjBet || 0) + (state.mnBet || 0) + (state.plPending || 0);
   const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
   const short = n => n >= 1e6 ? (n / 1e6).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'M'
                    : n >= 1000 ? (n / 1000).toLocaleString('de-DE', {maximumFractionDigits: 1}) + 'k' : String(n);
@@ -704,7 +759,7 @@ body{height:100%}
       title: 'Guthaben festlegen',
       hint: 'So viel Spielgeld hast du danach frei. Gewinn und Verlust im Graphen bleiben unverändert.',
       value: state.balance, quick: [100, 1000, 10000, 100000],
-      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); dcRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
+      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); dcRender(); plRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
     });
   };
   function openCustom() {
@@ -813,6 +868,7 @@ body{height:100%}
     $('bjProfit').textContent = el.textContent; $('bjProfit').className = el.className;
     $('mnProfit').textContent = el.textContent; $('mnProfit').className = el.className;
     $('dcProfit').textContent = el.textContent; $('dcProfit').className = el.className;
+    $('plProfit').textContent = el.textContent; $('plProfit').className = el.className;
     $('lRounds').textContent = $('sRounds').textContent;
     $('lRecord').textContent = $('sRecord').textContent;
     $('lWagered').textContent = $('sWagered').textContent;
@@ -847,7 +903,7 @@ body{height:100%}
 
   // ---------- Graph ----------
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); drawChartOn($('dcChart')); }
+  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); drawChartOn($('dcChart')); drawChartOn($('plChart')); }
   function drawChartOn(chart) {
     const cctx = chart.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -887,6 +943,7 @@ body{height:100%}
   new ResizeObserver(() => drawChartOn($('bjChart'))).observe($('bjChart'));
   new ResizeObserver(() => drawChartOn($('mnChart'))).observe($('mnChart'));
   new ResizeObserver(() => drawChartOn($('dcChart'))).observe($('dcChart'));
+  new ResizeObserver(() => drawChartOn($('plChart'))).observe($('plChart'));
 
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
@@ -1620,12 +1677,173 @@ body{height:100%}
   $('dcBalBtn').onclick = () => { if (!dcRolling) $('balBtn').onclick(); };
   dcRender();
 
+  // ---------- Plinko ----------
+  // Multiplikatoren wie bei Stake (≈99 % Auszahlungsquote). Jede Reihe: 50/50 links oder rechts.
+  const PL = {
+    8:  {low: [5.6, 2.1, 1.1, 1, .5, 1, 1.1, 2.1, 5.6], med: [13, 3, 1.3, .7, .4, .7, 1.3, 3, 13], high: [29, 4, 1.5, .3, .2, .3, 1.5, 4, 29]},
+    12: {low: [10, 3, 1.6, 1.4, 1.1, 1, .5, 1, 1.1, 1.4, 1.6, 3, 10], med: [33, 11, 4, 2, 1.1, .6, .3, .6, 1.1, 2, 4, 11, 33], high: [170, 24, 8.1, 2, .7, .2, .2, .2, .7, 2, 8.1, 24, 170]},
+    16: {low: [16, 9, 2, 1.4, 1.4, 1.2, 1.1, 1, .5, 1, 1.1, 1.2, 1.4, 1.4, 2, 9, 16], med: [110, 41, 10, 5, 3, 1.5, 1, .5, .3, .5, 1, 1.5, 3, 5, 10, 41, 110],
+          high: [1000, 130, 26, 9, 4, 2, .2, .2, .2, .2, .2, 2, 4, 9, 26, 130, 1000]},
+  };
+  if (typeof state.plBet !== 'number') state.plBet = 0;
+  if (!PL[state.plRows]) state.plRows = 12;
+  if (!['low', 'med', 'high'].includes(state.plRisk)) state.plRisk = 'med';
+  if (!Array.isArray(state.plHist)) state.plHist = [];
+  if (state.plPending) { state.balance = cents(state.balance + state.plPending); state.plPending = 0; save(); }  // Kugeln in der Luft beim Neuladen zurückbuchen
+  const plBalls = [];
+  const plFlash = new Map(), slotHit = new Map();
+  const plCanvas = $('plCanvas'), plx = plCanvas.getContext('2d');
+  let plGeo = null, plRaf = 0;
+  const xLabel = m => m >= 1000 ? (m / 1000) + 'k' : String(m).replace('.', ',');
+  function slotColor(i, n) {
+    const d = Math.abs(i - (n - 1) / 2) / ((n - 1) / 2);   // 0 Mitte … 1 Rand
+    const a = [242, 196, 68], b = [232, 64, 52];
+    return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * Math.pow(d, .8))).join(',')})`;
+  }
+  function plResize() {
+    const W = plCanvas.clientWidth, H = plCanvas.clientHeight;
+    if (!W || !H) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    plCanvas.width = W * dpr; plCanvas.height = H * dpr;
+    plx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const R = state.plRows;
+    const s = Math.min(W / (R + 2), (H * 1.25) / (R + 2));
+    const slotH = Math.max(18, Math.min(30, s * .85));
+    const top = s * .6, bottom = H - slotH - 4;
+    const sy = (bottom - top - s * .4) / R;
+    plGeo = {W, H, R, s, sy, top, slotH, cx: W / 2, slotY: H - slotH - 2};
+    plDraw();
+  }
+  new ResizeObserver(plResize).observe(plCanvas);
+  const pegPos = (r, i) => ({x: plGeo.cx + (i - (r + 2) / 2) * plGeo.s, y: plGeo.top + r * plGeo.sy});
+  function plDraw(now = performance.now()) {
+    if (!plGeo) return;
+    const {W, H, R, s, slotH, slotY} = plGeo;
+    plx.clearRect(0, 0, W, H);
+    const pr = Math.max(2, s * .1);
+    for (let r = 0; r < R; r++) for (let i = 0; i < r + 3; i++) {
+      const p = pegPos(r, i), f = plFlash.get(r + ':' + i);
+      const k = f ? Math.max(0, 1 - (now - f) / 300) : 0;
+      plx.beginPath(); plx.arc(p.x, p.y, pr + k * pr * .8, 0, 7);
+      plx.fillStyle = k ? `rgba(255,255,255,${.75 + k * .25})` : 'rgba(255,255,255,.75)'; plx.fill();
+    }
+    const mult = PL[R][state.plRisk];
+    const fs = Math.max(8, Math.min(13, s * .36));
+    plx.font = `800 ${fs}px ${getComputedStyle(document.body).fontFamily}`;
+    plx.textAlign = 'center'; plx.textBaseline = 'middle';
+    mult.forEach((m, j) => {
+      const x = plGeo.cx + (j - R / 2) * s, w = s * .9;
+      const h0 = slotHit.get(j), k = h0 ? Math.max(0, 1 - (now - h0) / 350) : 0;
+      const y = slotY + Math.sin(k * Math.PI) * 6;
+      plx.fillStyle = slotColor(j, mult.length);
+      plx.beginPath(); plx.roundRect ? plx.roundRect(x - w / 2, y, w, slotH, 5) : plx.rect(x - w / 2, y, w, slotH); plx.fill();
+      plx.fillStyle = '#1A1408'; plx.fillText(xLabel(m), x, y + slotH / 2 + .5);
+    });
+    const br = Math.max(4, s * .24);
+    for (const b of plBalls) {
+      plx.beginPath(); plx.arc(b.x, b.y, br, 0, 7);
+      plx.fillStyle = '#FBFAF6'; plx.shadowColor = 'rgba(0,0,0,.35)'; plx.shadowBlur = 4; plx.fill(); plx.shadowBlur = 0;
+    }
+  }
+  function plLoop(now) {
+    const {R, s, sy, top, cx, slotY} = plGeo;
+    const seg = reduced ? 20 : 105;
+    for (let n = plBalls.length - 1; n >= 0; n--) {
+      const b = plBalls[n];
+      const t = (now - b.t0) / seg;
+      const k = Math.min(Math.floor(t), R), f = t - Math.floor(t);
+      // Position vor Reihe k: Versatz = (Rechts-Schritte − k/2) · s
+      const off = j => (b.path.slice(0, j).reduce((a, v) => a + v, 0) - j / 2) * s;
+      if (k >= R) {
+        const fy = Math.min(1, (t - R) * 1.6);
+        const yS = top + R * sy - s * .3;
+        b.x = cx + off(R); b.y = yS + (slotY + 4 - yS) * fy * fy;
+        if (fy >= 1) { plBalls.splice(n, 1); plLand(b, now); }
+        continue;
+      }
+      if (k > b.hit) { b.hit = k; plFlash.set(k + ':' + (b.path.slice(0, k).reduce((a, v) => a + v, 0) + 1), now); if (!reduced) sfx.tick(.35); }
+      const x0 = cx + off(k), x1 = cx + off(k + 1);
+      const y0 = top + k * sy - s * .3, y1 = top + (k + 1) * sy - s * .3;
+      b.x = x0 + (x1 - x0) * f;
+      b.y = y0 + (y1 - y0) * f * f - Math.sin(f * Math.PI) * sy * .35;
+    }
+    plDraw(now);
+    plRaf = plBalls.length || [...slotHit.values(), ...plFlash.values()].some(v => now - v < 400) ? requestAnimationFrame(plLoop) : 0;
+    if (!plRaf) plRender();
+  }
+  function plLand(b, now) {
+    const ret = cents(b.bet * b.m), net = cents(ret - b.bet);
+    slotHit.set(b.slot, now);
+    state.plPending = cents(state.plPending - b.bet);
+    state.balance = cents(state.balance + ret);
+    state.rounds += 1; state.wagered += b.bet; if (net > 0) state.wins += 1;
+    state.graph.push(cents((state.graph[state.graph.length - 1] || 0) + net));
+    if (state.graph.length > 500) state.graph = state.graph.slice(-500);
+    state.record = Math.max(state.record || 0, state.balance + onTable());
+    state.plHist.unshift([b.m, b.color]); state.plHist = state.plHist.slice(0, 8);
+    if (b.m >= 2) { sfx.win(b.m); buzz([20, 25, 30]); }
+    else tone(b.m >= 1 ? 660 : 330, 0, .12, .06, 'triangle');
+    save(); render(); renderStats(); drawChart(); plRender();
+  }
+  $('plGo').onclick = () => {
+    const bet = state.plBet;
+    if (!bet || !plGeo) return;
+    if (bet > state.balance) { plRender(); return; }
+    ensureAudio();
+    const R = state.plRows, path = Array.from({length: R}, () => randInt(2));
+    const slot = path.reduce((a, v) => a + v, 0), mult = PL[R][state.plRisk];
+    state.balance = cents(state.balance - bet);
+    state.plPending = cents((state.plPending || 0) + bet);
+    plBalls.push({path, slot, m: mult[slot], color: slotColor(slot, mult.length), bet, t0: performance.now(), hit: -1, x: plGeo.cx, y: 0});
+    save(); sfx.chip(); buzz(6); plRender();
+    if (!plRaf) plRaf = requestAnimationFrame(plLoop);
+  };
+
+  const plChips = $('plChips');
+  CHIPS.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.v = v;
+    b.onclick = () => {
+      ensureAudio();
+      if (v === 'custom' && !state.custom) { openCustom(); setTimeout(plRender, 0); return; }
+      const a = v === 'all' ? state.balance : v === 'custom' ? state.custom : Number(v);
+      const nb = v === 'all' ? state.balance : Math.min(cents(state.plBet + a), state.balance);
+      if (nb <= 0) return;
+      state.plBet = nb; sfx.chip(); buzz(8); save(); plRender();
+    };
+    plChips.appendChild(b);
+  });
+  $('plClear').onclick = () => { state.plBet = 0; save(); plRender(); };
+  $('plRisk').querySelectorAll('button').forEach(b => b.onclick = () => { if (plBalls.length) return; state.plRisk = b.dataset.v; save(); sfx.chip(); plRender(); plDraw(); });
+  $('plRows').querySelectorAll('button').forEach(b => b.onclick = () => { if (plBalls.length) return; state.plRows = Number(b.dataset.v); save(); sfx.chip(); plRender(); plResize(); });
+
+  function plRender() {
+    $('plBal').textContent = fmt(state.balance);
+    const flying = plBalls.length > 0;
+    $('plRisk').querySelectorAll('button').forEach(b => { b.setAttribute('aria-checked', b.dataset.v === state.plRisk); b.disabled = flying && b.dataset.v !== state.plRisk; });
+    $('plRows').querySelectorAll('button').forEach(b => { b.setAttribute('aria-checked', b.dataset.v === String(state.plRows)); b.disabled = flying && b.dataset.v !== String(state.plRows); });
+    $('plStake').textContent = state.plBet ? fmt(state.plBet) : '';
+    $('plGo').disabled = !state.plBet || state.plBet > state.balance;
+    $('plClear').disabled = !state.plBet;
+    $('plExit').disabled = flying;
+    $('plHist').innerHTML = state.plHist.map(([m, c]) => `<span style="background:${c}">${xLabel(m)}×</span>`).join('');
+    plChips.querySelectorAll('.chip').forEach(c => {
+      const v = c.dataset.v;
+      if (v === 'custom') c.innerHTML = state.custom ? `<span>${short(state.custom)}<small>eigener</small></span>` : '<span>+<small>eigener</small></span>';
+      else if (v === 'all') c.innerHTML = '<span>ALL<small>in</small></span>';
+      else c.innerHTML = `<span>${v}</span>`;
+    });
+  }
+  $('plBalBtn').onclick = () => { if (!plBalls.length) $('balBtn').onclick(); };
+  plRender();
+
   // ---------- Menü ----------
   function showView(v) {
     $('lobby').hidden = v !== 'lobby';
     $('bj').hidden = v !== 'blackjack';
     $('mn').hidden = v !== 'mines';
     $('dc').hidden = v !== 'dice';
+    $('pl').hidden = v !== 'plinko';
     $('lobbyBal').textContent = fmt(state.balance + onTable());
     state.view = v; save();
     if (v === 'lobby') { renderStats(); requestAnimationFrame(() => drawChartOn($('lobbyChart'))); }
@@ -1633,6 +1851,7 @@ body{height:100%}
     if (v === 'blackjack') { bjRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('bjChart'))); }
     if (v === 'mines') { mnRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('mnChart'))); }
     if (v === 'dice') { dcRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('dcChart'))); }
+    if (v === 'plinko') { plRender(); renderStats(); requestAnimationFrame(() => { drawChartOn($('plChart')); plResize(); }); }
   }
   $('exitBtn').onclick = () => { if (!spinning) showView('lobby'); };
   $('bjExit').onclick = () => { if (bj.phase === 'bet' || bj.phase === 'done') showView('lobby'); };
@@ -1652,9 +1871,11 @@ body{height:100%}
   $('playBlackjack').onclick = () => showView('blackjack');
   $('playMines').onclick = () => showView('mines');
   $('playDice').onclick = () => showView('dice');
+  $('playPlinko').onclick = () => showView('plinko');
+  $('plExit').onclick = () => { if (!plBalls.length) showView('lobby'); };
   $('dcExit').onclick = () => { if (!dcRolling) showView('lobby'); };
   $('mnExit').onclick = () => { if (mn.phase !== 'play') showView('lobby'); };
-  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines' || state.view === 'dice') showView(state.view);
+  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines' || state.view === 'dice' || state.view === 'plinko') showView(state.view);
 
   renderSound();
   render();
