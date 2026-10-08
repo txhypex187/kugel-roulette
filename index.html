@@ -342,6 +342,33 @@ body{height:100%}
 .seg button:disabled{opacity:.4}
 .game-icon svg .pball{fill:#FBFAF6;stroke:none}
 
+/* Slots */
+.sl-in{grid-template-rows:auto 80px minmax(0,1fr) auto}
+.sl-stage{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;background:var(--felt);color:var(--felt-ink);border-radius:22px;padding:10px 12px 12px;
+  box-shadow:inset 0 0 0 1px var(--felt-line),inset 0 0 60px rgba(0,0,0,.25);overflow:hidden}
+.sl-msg{text-align:center;font-family:var(--display);font-weight:600;font-size:24px;min-height:30px;font-variant-numeric:tabular-nums}
+.sl-msg.win{color:#F2C444;text-shadow:0 0 18px rgba(242,196,68,.5);animation:pop2 .45s cubic-bezier(.2,1.7,.4,1)}
+.sl-msg.big{font-size:30px}
+.sl-area{min-height:0;container-type:size;display:grid;place-items:center}
+.sl-machine{--sz:min(100cqw, 100cqh * 1.15);width:var(--sz);height:calc(var(--sz) / 1.15);position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px;border-radius:18px;
+  background:linear-gradient(#0B1F17,#0F2A1F);box-shadow:inset 0 0 0 2px #D2A458,0 6px 18px rgba(0,0,0,.35)}
+.reel{position:relative;overflow:hidden;border-radius:10px;background:linear-gradient(#E9E4D6,#FBFAF6 22%,#FBFAF6 78%,#E9E4D6)}
+.strip{position:absolute;left:0;right:0;top:0}
+.sym{height:calc((var(--sz) / 1.15 - 16px) / 3);display:grid;place-items:center;font-size:calc((var(--sz) / 1.15 - 16px) / 3 * .58);line-height:1;transition:transform .2s}
+.sym span{display:inline-block}
+.sym.lit{background:radial-gradient(closest-side,rgba(242,196,68,.5),rgba(242,196,68,0))}
+.sym.lit span{animation:symhit .7s ease-in-out 2}
+@keyframes symhit{50%{transform:scale(1.18)}}
+.reel.blur .strip{filter:blur(.6px)}
+.sl-lines{position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);pointer-events:none;overflow:visible}
+.sl-lines polyline{fill:none;stroke:#F2C444;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px rgba(242,196,68,.8));
+  stroke-dasharray:600;stroke-dashoffset:600;animation:drawline .5s ease-out forwards}
+@keyframes drawline{to{stroke-dashoffset:0}}
+.sl-pay{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.sl-pay div{background:rgba(0,0,0,.22);border-radius:8px;padding:3px 0 4px;font-size:10.5px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.25}
+.sl-pay span{display:block;font-size:16px}
+.game-icon svg .seven{fill:var(--accent);stroke:none;font-family:var(--display);font-weight:700;font-size:15px;text-anchor:middle}
+
 /* Eingabe-Sheet */
 .sheet-bg{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
 @keyframes fade{from{opacity:0}}
@@ -445,7 +472,10 @@ body{height:100%}
         <span class="game-icon"><svg viewBox="0 0 48 48"><circle class="pip" cx="24" cy="12" r="2.4"/><circle class="pip" cx="17" cy="21" r="2.4"/><circle class="pip" cx="31" cy="21" r="2.4"/><circle class="pip" cx="10" cy="30" r="2.4"/><circle class="pip" cx="24" cy="30" r="2.4"/><circle class="pip" cx="38" cy="30" r="2.4"/><circle class="pball" cx="21" cy="16" r="3.4"/><path d="M6 40h36"/></svg></span>
         <span class="game-name">Plinko</span><span class="game-sub">Bis 1000×</span>
       </button>
-      <div class="game soon"><span class="game-icon">?</span><span class="game-name">Spiel 6</span><span class="game-sub">Bald verfügbar</span></div>
+      <button class="game live" id="playSlots">
+        <span class="game-icon"><svg viewBox="0 0 48 48"><rect class="die" x="5" y="11" width="38" height="26" rx="5"/><path d="M17.7 11v26M30.3 11v26"/><text x="11.3" y="29" class="seven">7</text><text x="24" y="29" class="seven">7</text><text x="36.7" y="29" class="seven">7</text></svg></span>
+        <span class="game-name">Slots</span><span class="game-sub">5 Linien</span>
+      </button>
     </div>
   </div>
 </div>
@@ -598,6 +628,44 @@ body{height:100%}
         <div class="actbar">
           <button class="tool" id="plClear" aria-label="Einsatz leeren" title="Einsatz leeren"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
           <button class="spin" id="plGo">Kugel fallen lassen <span class="amt" id="plStake"></span></button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="bj sl" id="sl" hidden>
+  <div class="bj-in sl-in">
+    <header class="top bj-top">
+      <button class="icon-btn" id="slExit" aria-label="Zum Menü" title="Zum Menü"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="brand">Slots</div>
+      <button class="bal" id="slBalBtn" aria-label="Guthaben ändern">
+        <div class="bal-label">Guthaben <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></div>
+        <div class="bal-val" id="slBal">100</div>
+      </button>
+    </header>
+    <div class="graph bj-graph" aria-label="Gewinn und Verlust">
+      <div class="graph-head"><span class="graph-label">Gewinn / Verlust</span><span class="graph-val" id="slProfit">0</span></div>
+      <div class="chart-box"><canvas id="slChart" aria-hidden="true"></canvas></div>
+    </div>
+    <section class="sl-stage" aria-label="Automat">
+      <div class="sl-msg" id="slMsg" aria-live="polite"></div>
+      <div class="sl-area">
+        <div class="sl-machine" id="slMachine">
+          <div class="reel"><div class="strip"></div></div>
+          <div class="reel"><div class="strip"></div></div>
+          <div class="reel"><div class="strip"></div></div>
+          <svg class="sl-lines" id="slLines" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+      </div>
+      <div class="sl-pay" id="slPay"></div>
+    </section>
+    <section class="controls bj-ctrl" aria-label="Aktionen">
+      <div class="bj-bar">
+        <div class="chips" id="slChips"></div>
+        <div class="actbar">
+          <button class="tool" id="slClear" aria-label="Einsatz leeren" title="Einsatz leeren"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+          <button class="spin" id="slGo">Drehen <span class="amt" id="slStake"></span></button>
         </div>
       </div>
     </section>
@@ -759,7 +827,7 @@ body{height:100%}
       title: 'Guthaben festlegen',
       hint: 'So viel Spielgeld hast du danach frei. Gewinn und Verlust im Graphen bleiben unverändert.',
       value: state.balance, quick: [100, 1000, 10000, 100000],
-      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); dcRender(); plRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
+      onOk: v => { state.balance = v; save(); render(); $('lobbyBal').textContent = fmt(state.balance + onTable()); bjRender(); mnRender(); dcRender(); plRender(); slRender(); say('Guthaben auf ' + fmt(v) + ' gesetzt.', 'info'); }
     });
   };
   function openCustom() {
@@ -869,6 +937,7 @@ body{height:100%}
     $('mnProfit').textContent = el.textContent; $('mnProfit').className = el.className;
     $('dcProfit').textContent = el.textContent; $('dcProfit').className = el.className;
     $('plProfit').textContent = el.textContent; $('plProfit').className = el.className;
+    $('slProfit').textContent = el.textContent; $('slProfit').className = el.className;
     $('lRounds').textContent = $('sRounds').textContent;
     $('lRecord').textContent = $('sRecord').textContent;
     $('lWagered').textContent = $('sWagered').textContent;
@@ -903,7 +972,7 @@ body{height:100%}
 
   // ---------- Graph ----------
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); drawChartOn($('dcChart')); drawChartOn($('plChart')); }
+  function drawChart() { drawChartOn($('chart')); drawChartOn($('lobbyChart')); drawChartOn($('bjChart')); drawChartOn($('mnChart')); drawChartOn($('dcChart')); drawChartOn($('plChart')); drawChartOn($('slChart')); }
   function drawChartOn(chart) {
     const cctx = chart.getContext('2d');
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -944,6 +1013,7 @@ body{height:100%}
   new ResizeObserver(() => drawChartOn($('mnChart'))).observe($('mnChart'));
   new ResizeObserver(() => drawChartOn($('dcChart'))).observe($('dcChart'));
   new ResizeObserver(() => drawChartOn($('plChart'))).observe($('plChart'));
+  new ResizeObserver(() => drawChartOn($('slChart'))).observe($('slChart'));
 
   // ---------- Kessel ----------
   const canvas = $('wheel'), ctx = canvas.getContext('2d');
@@ -1837,6 +1907,115 @@ body{height:100%}
   $('plBalBtn').onclick = () => { if (!plBalls.length) $('balBtn').onclick(); };
   plRender();
 
+  // ---------- Slots ----------
+  // 3 Walzen × 3 Reihen, 5 Linien (3 waagrecht, 2 diagonal). Einsatz wird auf die 5 Linien verteilt.
+  // 💎 ist Wild. Auszahlung pro Linie (× Linieneinsatz): exakt berechnete Auszahlungsquote ≈ 96,3 %.
+  const SYM = [
+    {s: '🍒', w: 28, p: 6}, {s: '🍋', w: 22, p: 11}, {s: '🍇', w: 18, p: 16}, {s: '🔔', w: 13, p: 26},
+    {s: '⭐', w: 9, p: 50}, {s: '7️⃣', w: 6, p: 150}, {s: '💎', w: 4, p: 500, wild: true},
+  ];
+  const SW = SYM.reduce((a, x) => a + x.w, 0);
+  const LINES = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
+  if (typeof state.slBet !== 'number') state.slBet = 0;
+  let slSpinning = false;
+  let slGrid = [[0, 1, 2], [3, 4, 5], [1, 6, 2]];
+  const pickSym = () => { let x = randInt(SW); for (let i = 0; i < SYM.length; i++) { if (x < SYM[i].w) return i; x -= SYM[i].w; } return 0; };
+  function linePay(ids) {
+    const nw = ids.filter(i => !SYM[i].wild);
+    if (!nw.length) return SYM[6].p;
+    return nw.every(i => i === nw[0]) ? SYM[nw[0]].p : 0;
+  }
+  const reels = [...$('slMachine').querySelectorAll('.reel')];
+  const symHTML = i => `<div class="sym"><span>${SYM[i].s}</span></div>`;
+  function slShow() { reels.forEach((r, k) => { const st = r.firstElementChild; st.style.transition = 'none'; st.style.transform = 'none'; st.innerHTML = slGrid[k].map(symHTML).join(''); }); }
+  slShow();
+  $('slPay').innerHTML = SYM.map(x => `<div><span>${x.s}</span>${fmt(x.p / 5)}×</div>`).join('');
+
+  const slChips = $('slChips');
+  CHIPS.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.v = v;
+    b.onclick = () => {
+      if (slSpinning) return;
+      ensureAudio();
+      if (v === 'custom' && !state.custom) { openCustom(); setTimeout(slRender, 0); return; }
+      const a = v === 'all' ? state.balance : v === 'custom' ? state.custom : Number(v);
+      const nb = v === 'all' ? state.balance : Math.min(cents(state.slBet + a), state.balance);
+      if (nb <= 0) return;
+      state.slBet = nb; sfx.chip(); buzz(8); save(); slRender();
+    };
+    slChips.appendChild(b);
+  });
+  $('slClear').onclick = () => { if (slSpinning) return; state.slBet = 0; save(); slRender(); };
+
+  $('slGo').onclick = async () => {
+    const bet = state.slBet;
+    if (slSpinning || !bet || bet > state.balance) return;
+    ensureAudio(); slSpinning = true;
+    state.balance = cents(state.balance - bet); state.slPending = bet; save();
+    const msg = $('slMsg'); msg.textContent = ''; msg.className = 'sl-msg';
+    $('slLines').innerHTML = '';
+    const result = [0, 1, 2].map(() => [0, 1, 2].map(pickSym));
+    slRender(); sfx.launch();
+    const cellH = reels[0].clientHeight / 3;
+    await Promise.all(reels.map((r, k) => new Promise(res => {
+      const st = r.firstElementChild;
+      const n = reduced ? 3 : 14 + k * 7;
+      const filler = Array.from({length: n}, pickSym);
+      const seq = [...slGrid[k], ...filler, ...result[k]];
+      st.style.transition = 'none'; st.style.transform = 'none';
+      st.innerHTML = seq.map(symHTML).join('');
+      void st.offsetHeight;
+      const dur = reduced ? 60 : 650 + k * 280;
+      r.classList.add('blur');
+      st.style.transition = `transform ${dur}ms cubic-bezier(.25,.85,.35,1.04)`;
+      st.style.transform = `translateY(${-(seq.length - 3) * cellH}px)`;
+      setTimeout(() => { r.classList.remove('blur'); sfx.land(); buzz(8); res(); }, dur);
+    })));
+    slGrid = result; slShow();
+    // Auswerten
+    const lineBet = bet / 5;
+    let ret = 0;
+    const wins = [];
+    LINES.forEach((ln, li) => { const p = linePay(ln.map((row, k) => result[k][row])); if (p) { ret += p * lineBet; wins.push(li); } });
+    ret = cents(ret);
+    const net = cents(ret - bet);
+    state.balance = cents(state.balance + ret); state.slPending = 0;
+    state.rounds += 1; state.wagered += bet; if (net > 0) state.wins += 1;
+    state.graph.push(cents((state.graph[state.graph.length - 1] || 0) + net));
+    if (state.graph.length > 500) state.graph = state.graph.slice(-500);
+    state.record = Math.max(state.record || 0, state.balance + onTable());
+    if (wins.length) {
+      $('slLines').innerHTML = wins.map(li => `<polyline points="${LINES[li].map((row, k) => (50 + k * 100) + ',' + (50 + row * 100)).join(' ')}"/>`).join('');
+      wins.forEach(li => LINES[li].forEach((row, k) => reels[k].firstElementChild.children[row].classList.add('lit')));
+      const x = ret / bet;
+      msg.textContent = (x >= 10 ? 'Großer Gewinn! ' : '') + '+' + fmt(ret);
+      msg.className = 'sl-msg win' + (x >= 10 ? ' big' : '');
+      sfx.win(x); buzz(x >= 10 ? [40, 30, 40, 30, 80] : [25, 30, 40]);
+    } else { msg.textContent = '−' + fmt(bet); msg.className = 'sl-msg'; }
+    if (state.slBet > state.balance) state.slBet = state.balance > 0 ? state.balance : 0;
+    slSpinning = false;
+    save(); render(); renderStats(); drawChart(); slRender();
+  };
+  if (state.slPending) { state.balance = cents(state.balance + state.slPending); state.slPending = 0; save(); }
+
+  function slRender() {
+    $('slBal').textContent = fmt(state.balance);
+    $('slStake').textContent = state.slBet ? fmt(state.slBet) : '';
+    $('slGo').disabled = !state.slBet || slSpinning || state.slBet > state.balance;
+    $('slClear').disabled = !state.slBet || slSpinning;
+    $('slExit').disabled = slSpinning;
+    slChips.querySelectorAll('.chip').forEach(c => {
+      const v = c.dataset.v;
+      if (v === 'custom') c.innerHTML = state.custom ? `<span>${short(state.custom)}<small>eigener</small></span>` : '<span>+<small>eigener</small></span>';
+      else if (v === 'all') c.innerHTML = '<span>ALL<small>in</small></span>';
+      else c.innerHTML = `<span>${v}</span>`;
+      c.disabled = slSpinning;
+    });
+  }
+  $('slBalBtn').onclick = () => { if (!slSpinning) $('balBtn').onclick(); };
+  slRender();
+
   // ---------- Menü ----------
   function showView(v) {
     $('lobby').hidden = v !== 'lobby';
@@ -1844,6 +2023,7 @@ body{height:100%}
     $('mn').hidden = v !== 'mines';
     $('dc').hidden = v !== 'dice';
     $('pl').hidden = v !== 'plinko';
+    $('sl').hidden = v !== 'slots';
     $('lobbyBal').textContent = fmt(state.balance + onTable());
     state.view = v; save();
     if (v === 'lobby') { renderStats(); requestAnimationFrame(() => drawChartOn($('lobbyChart'))); }
@@ -1851,6 +2031,7 @@ body{height:100%}
     if (v === 'blackjack') { bjRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('bjChart'))); }
     if (v === 'mines') { mnRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('mnChart'))); }
     if (v === 'dice') { dcRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('dcChart'))); }
+    if (v === 'slots') { slRender(); renderStats(); requestAnimationFrame(() => drawChartOn($('slChart'))); }
     if (v === 'plinko') { plRender(); renderStats(); requestAnimationFrame(() => { drawChartOn($('plChart')); plResize(); }); }
   }
   $('exitBtn').onclick = () => { if (!spinning) showView('lobby'); };
@@ -1872,10 +2053,12 @@ body{height:100%}
   $('playMines').onclick = () => showView('mines');
   $('playDice').onclick = () => showView('dice');
   $('playPlinko').onclick = () => showView('plinko');
+  $('playSlots').onclick = () => showView('slots');
+  $('slExit').onclick = () => { if (!slSpinning) showView('lobby'); };
   $('plExit').onclick = () => { if (!plBalls.length) showView('lobby'); };
   $('dcExit').onclick = () => { if (!dcRolling) showView('lobby'); };
   $('mnExit').onclick = () => { if (mn.phase !== 'play') showView('lobby'); };
-  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines' || state.view === 'dice' || state.view === 'plinko') showView(state.view);
+  if (state.view === 'lobby' || state.view === 'blackjack' || state.view === 'mines' || state.view === 'dice' || state.view === 'plinko' || state.view === 'slots') showView(state.view);
 
   renderSound();
   render();
